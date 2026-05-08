@@ -1,0 +1,26 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "gmSeNf5Xr0M-tPYSNVzxq"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "tripflow app icon"
+
+[[generated]]
+id = "vIgl_cwZdSUdjB6W2TMuj"
+uri = "file://artifacts/mobile/assets/images/trip_santorini.png"
+type = "image"
+title = "santorini trip cover"
+
+[[generated]]
+id = "v3LOF53R0hniElC7wS1c3"
+uri = "file://artifacts/mobile/assets/images/trip_tokyo.png"
+type = "image"
+title = "tokyo trip cover"
+
+[[generated]]
+id = "dk502hWpmHWL2iPK-d1ic"
+uri = "file://artifacts/mobile/assets/images/trip_bali.png"
+type = "image"
+title = "bali trip cover"
