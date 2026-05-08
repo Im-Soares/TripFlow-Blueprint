@@ -30,6 +30,7 @@ function RootLayoutNav() {
       />
       <Stack.Screen name="trip/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="achievements" options={{ headerShown: false }} />
+      <Stack.Screen name="explore/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }

@@ -1,0 +1,330 @@
+Essa é exatamente a direção certa.
+Agora estás a transformar o Explore numa experiência social de viagens real — não apenas um feed bonito.
+
+E a decisão de:
+
+* remover likes
+* focar em saves/comments/follows
+  é MUITO inteligente.
+
+Isso evita a sensação tóxica de rede social tradicional.
+
+---
+
+# O fluxo ideal do Explore
+
+## Estado 1 — Grid (Pinterest style)
+
+O utilizador vê:
+
+* masonry grid
+* fotos e vídeos
+* scroll infinito
+* descoberta rápida
+
+Muito visual.
+Muito clean.
+
+---
+
+# Estado 2 — Open Post (Full screen)
+
+Quando o utilizador clica num card:
+
+A imagem/vídeo abre fullscreen.
+
+Exatamente como:
+
+* Pinterest open pin
+* Instagram post viewer
+* TikTok comments sheet
+
+---
+
+# O comportamento correto
+
+## Abrir post
+
+### Deve:
+
+* animar suavemente
+* expandir do card
+* manter contexto visual
+
+Não fazer:
+❌ abrir modal estranho
+❌ mudar totalmente de página abruptamente
+
+---
+
+# Estrutura do post aberto
+
+## TOPO
+
+Imagem/vídeo grande
+
+### Overlay:
+
+* back button
+* save to trip
+* share
+
+---
+
+# INFO DO POST
+
+## Creator section
+
+* avatar
+* nome
+* username
+* botão Follow
+
+Exemplo:
+
+Alex Costa
+@alextravels
+[ Follow ]
+
+---
+
+# DESCRIÇÃO
+
+Exemplo:
+
+> “Hidden ramen spot in Tokyo.
+> Less than ¥800 and almost no tourists.”
+
+---
+
+# LOCALIZAÇÃO
+
+📍 Shibuya, Tokyo
+
+Clicável:
+
+* abrir mapa
+* adicionar à trip
+
+---
+
+# COMMENTS
+
+Muito importante.
+
+Mas:
+
+## simples
+
+Não cries:
+
+* replies infinitas
+* threads complexas
+* reactions
+
+Apenas:
+
+* comentário
+* avatar
+* timestamp
+
+---
+
+# O melhor comportamento:
+
+## Scroll contínuo entre posts
+
+Isto é MUITO importante.
+
+Quando abres um post:
+
+* podes continuar a scrollar verticalmente
+* próximo post aparece automaticamente
+
+EXATAMENTE como:
+
+* TikTok
+* Reels
+* Pinterest feed open mode
+
+---
+
+# O efeito correto
+
+Grid → Open Post → Infinite scroll
+
+Isso cria:
+
+* retenção
+* binge scrolling
+* descoberta contínua
+
+---
+
+# UX ideal
+
+## Quando volta atrás:
+
+Deve regressar:
+
+* à posição exata do grid
+* sem resetar scroll
+
+Isto é MUITO importante.
+
+Se resetar:
+
+> experiência fica horrível.
+
+---
+
+# Sistema social (a tua decisão foi boa)
+
+## NÃO TER likes
+
+Excelente decisão.
+
+Likes:
+
+* adicionam ruído
+* gamificam errado
+* tornam tudo “Instagram clone”
+
+---
+
+# O que deves ter
+
+## FOLLOWS
+
+Sim.
+
+Porque:
+
+* pessoas seguem travel taste
+* criadores de viagens
+* fotógrafos
+* food explorers
+
+---
+
+# Perfis devem mostrar
+
+## Tabs:
+
+* Posts
+* Collections
+* Trips
+
+---
+
+# Posts no perfil
+
+Grid estilo Pinterest.
+
+Exemplo:
+
+* cafés
+* hotéis
+* vídeos
+* praias
+* rooftops
+
+---
+
+# Melhor feature possível
+
+## “Saved to Trip”
+
+Em qualquer post:
+[ Save to Trip ]
+
+Depois:
+
+* Bali Retreat
+* Japan 2026
+* Summer Europe
+
+Isto liga:
+Explore → Planeamento
+
+Essa integração é o que torna a app diferente.
+
+---
+
+# O que NÃO recomendo
+
+❌ stories
+❌ DMs complexas
+❌ hashtags infinitas
+❌ algoritmo estilo TikTok agressivo
+❌ likes públicos
+❌ follower counts gigantes em destaque
+
+---
+
+# A app deve sentir-se como:
+
+## “Travel inspiration tool”
+
+não:
+
+## “social media app”
+
+Essa diferença é crítica.
+
+---
+
+# Arquitetura ideal do Explore
+
+## Feed
+
+Pinterest masonry
+
+## Open Post
+
+Fullscreen immersive
+
+## Navigation
+
+Vertical continuous scroll
+
+## Social
+
+Lightweight
+
+## Main action
+
+Save to Trip
+
+---
+
+# Visualmente
+
+Mantém:
+
+* dark premium
+* minimal
+* imagem primeiro
+* UI subtil
+
+A imagem deve dominar a tela.
+
+Não os componentes.
+
+---
+
+# Resultado final
+
+Se fizeres isto bem, vais ter algo entre:
+
+* Pinterest
+* Travel TikTok
+* Are.na
+* Airbnb inspiration
+* Instagram travel creators
+
+Mas com:
+
+> planeamento de viagens integrado.
+
+E isso é uma proposta MUITO forte.

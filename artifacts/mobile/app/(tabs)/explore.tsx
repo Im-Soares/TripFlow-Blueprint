@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
@@ -19,6 +20,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/context/AppContext";
+import { POSTS } from "@/constants/posts";
 import { useColors } from "@/hooks/useColors";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -32,143 +34,6 @@ const COVER: Record<string, ImageSourcePropType> = {
   bali: require("@/assets/images/trip_bali.png"),
 };
 
-type Post = {
-  id: string;
-  title: string;
-  location: string;
-  tag: "foryou" | "trending" | "all";
-  imgH: number;
-  cover?: string;
-  grad?: [string, string];
-  emoji?: string;
-};
-
-const POSTS: Post[] = [
-  {
-    id: "p1",
-    title: "Sunset at Oia",
-    location: "Santorini, Greece",
-    tag: "foryou",
-    imgH: 240,
-    cover: "santorini",
-  },
-  {
-    id: "p2",
-    title: "Best ramen under ¥800",
-    location: "Tokyo, Japan",
-    tag: "trending",
-    imgH: 164,
-    cover: "tokyo",
-  },
-  {
-    id: "p3",
-    title: "Hidden waterfall trail",
-    location: "Ubud, Bali",
-    tag: "foryou",
-    imgH: 164,
-    cover: "bali",
-  },
-  {
-    id: "p4",
-    title: "Rooftop bar at midnight",
-    location: "Bangkok, Thailand",
-    tag: "trending",
-    imgH: 220,
-    grad: ["#FF6B6B", "#C2185B"],
-    emoji: "🍹",
-  },
-  {
-    id: "p5",
-    title: "Secret beach cove",
-    location: "Maldives",
-    tag: "foryou",
-    imgH: 164,
-    grad: ["#4ECDC4", "#006E7F"],
-    emoji: "🏝️",
-  },
-  {
-    id: "p6",
-    title: "Morning café ritual",
-    location: "Paris, France",
-    tag: "all",
-    imgH: 220,
-    grad: ["#7C6FF7", "#3B2FB5"],
-    emoji: "☕",
-  },
-  {
-    id: "p7",
-    title: "Neon streets at midnight",
-    location: "Seoul, South Korea",
-    tag: "trending",
-    imgH: 164,
-    grad: ["#C44BFF", "#FF6B6B"],
-    emoji: "🌆",
-  },
-  {
-    id: "p8",
-    title: "Overwater villa escape",
-    location: "Maldives",
-    tag: "foryou",
-    imgH: 240,
-    grad: ["#0099CC", "#4ECDC4"],
-    emoji: "🌊",
-  },
-  {
-    id: "p9",
-    title: "Alpine sunrise hike",
-    location: "Swiss Alps",
-    tag: "all",
-    imgH: 164,
-    grad: ["#2E7D52", "#4ECDC4"],
-    emoji: "⛰️",
-  },
-  {
-    id: "p10",
-    title: "Night market feast",
-    location: "Chiang Mai, Thailand",
-    tag: "all",
-    imgH: 210,
-    grad: ["#FFB347", "#FF6B6B"],
-    emoji: "🥢",
-  },
-  {
-    id: "p11",
-    title: "Secret garden café",
-    location: "Kyoto, Japan",
-    tag: "foryou",
-    imgH: 164,
-    grad: ["#FF6B6B", "#FFB347"],
-    emoji: "🌸",
-  },
-  {
-    id: "p12",
-    title: "Turquoise lagoon dive",
-    location: "Phi Phi, Thailand",
-    tag: "trending",
-    imgH: 180,
-    grad: ["#4ECDC4", "#7C6FF7"],
-    emoji: "🐠",
-  },
-  {
-    id: "p13",
-    title: "24h in Seoul",
-    location: "Seoul, South Korea",
-    tag: "all",
-    imgH: 200,
-    grad: ["#7C6FF7", "#C44BFF"],
-    emoji: "🗼",
-  },
-  {
-    id: "p14",
-    title: "Best pasta in Rome",
-    location: "Rome, Italy",
-    tag: "trending",
-    imgH: 164,
-    grad: ["#FFB347", "#E65100"],
-    emoji: "🍝",
-  },
-];
-
 const TABS = [
   { id: "all", label: "All" },
   { id: "foryou", label: "For You" },
@@ -181,12 +46,12 @@ export default function ExploreScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { trips } = useApp();
+  const router = useRouter();
 
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<TabId>("all");
   const [saved, setSaved] = useState<Set<string>>(new Set());
-  const [liked, setLiked] = useState<Set<string>>(new Set());
-  const [modalPost, setModalPost] = useState<string | null>(null);
+  const [saveModalPost, setSaveModalPost] = useState<string | null>(null);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 100;
@@ -205,33 +70,28 @@ export default function ExploreScreen() {
   const left = visible.filter((_, i) => i % 2 === 0);
   const right = visible.filter((_, i) => i % 2 === 1);
 
-  function toggleLike(id: string) {
-    setLiked((prev) => {
-      const n = new Set(prev);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
-    });
+  function openPost(postId: string) {
+    router.push(`/explore/${postId}?tab=${tab}` as any);
   }
 
   function confirmSave(tripId: string) {
-    if (!modalPost) return;
-    const id = modalPost;
-    setSaved((prev) => new Set(prev).add(id));
-    setModalPost(null);
+    if (!saveModalPost) return;
+    const pid = saveModalPost;
+    setSaved((prev) => new Set(prev).add(pid));
+    setSaveModalPost(null);
     const trip = trips.find((t) => t.id === tripId);
-    if (trip) Alert.alert("Saved!", `Added to "${trip.title}" ✈️`);
+    if (trip) Alert.alert("Saved! ✈️", `Added to "${trip.title}"`);
   }
 
-  function Card({ post }: { post: Post }) {
+  function Card({ post }: { post: (typeof POSTS)[number] }) {
     const isSaved = saved.has(post.id);
-    const isLiked = liked.has(post.id);
 
     return (
       <TouchableOpacity
         style={[styles.card, { width: COL_W }]}
-        activeOpacity={0.93}
+        activeOpacity={0.92}
+        onPress={() => openPost(post.id)}
       >
-        {/* Image area */}
         <View style={[styles.cardImg, { height: post.imgH }]}>
           {post.cover ? (
             <Image
@@ -241,7 +101,7 @@ export default function ExploreScreen() {
             />
           ) : (
             <LinearGradient
-              colors={post.grad!}
+              colors={(post.grad ?? ["#7C6FF7", "#3B2FB5"]) as [string, string]}
               style={StyleSheet.absoluteFill}
             />
           )}
@@ -250,30 +110,25 @@ export default function ExploreScreen() {
               <Text style={styles.emoji}>{post.emoji}</Text>
             </View>
           )}
-          {/* Subtle bottom fade */}
           <LinearGradient
-            colors={["transparent", "rgba(0,0,0,0.45)"]}
+            colors={["transparent", "rgba(0,0,0,0.42)"]}
             style={[StyleSheet.absoluteFill, styles.fade]}
           />
-          {/* Bookmark */}
           <TouchableOpacity
             style={[
               styles.bookmarkBtn,
               isSaved && { backgroundColor: colors.primary },
             ]}
-            onPress={() => (isSaved ? null : setModalPost(post.id))}
+            onPress={(e) => {
+              e.stopPropagation();
+              isSaved ? null : setSaveModalPost(post.id);
+            }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Feather
-              name={isSaved ? "bookmark" : "bookmark"}
-              size={12}
-              color="#fff"
-              style={isSaved ? { opacity: 1 } : { opacity: 0.9 }}
-            />
+            <Feather name="bookmark" size={12} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        {/* Caption */}
         <View style={styles.cardCaption}>
           <Text
             style={[styles.cardTitle, { color: colors.foreground }]}
@@ -281,27 +136,18 @@ export default function ExploreScreen() {
           >
             {post.title}
           </Text>
-          <View style={styles.cardMeta}>
-            <Text
-              style={[styles.cardLoc, { color: colors.mutedForeground }]}
-              numberOfLines={1}
-            >
-              📍 {post.location}
-            </Text>
-            <TouchableOpacity
-              onPress={() => toggleLike(post.id)}
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            >
-              <Feather
-                name="heart"
-                size={12}
-                color={isLiked ? "#FF6B6B" : colors.mutedForeground}
-              />
-            </TouchableOpacity>
-          </View>
+          <Text
+            style={[styles.cardLoc, { color: colors.mutedForeground }]}
+            numberOfLines={1}
+          >
+            📍 {post.location}
+          </Text>
           <TouchableOpacity
             style={[styles.addBtn, { borderColor: colors.border }]}
-            onPress={() => setModalPost(post.id)}
+            onPress={(e) => {
+              e.stopPropagation();
+              setSaveModalPost(post.id);
+            }}
           >
             <Feather name="plus" size={11} color={colors.primary} />
             <Text style={[styles.addBtnText, { color: colors.primary }]}>
@@ -326,14 +172,19 @@ export default function ExploreScreen() {
               <Text style={[styles.title, { color: colors.foreground }]}>
                 Explore
               </Text>
-              <Text style={[styles.tagline, { color: colors.mutedForeground }]}>
+              <Text
+                style={[styles.tagline, { color: colors.mutedForeground }]}
+              >
                 Find your next adventure
               </Text>
             </View>
             <TouchableOpacity
               style={[
                 styles.iconBtn,
-                { backgroundColor: colors.card, borderColor: colors.border },
+                {
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                },
               ]}
             >
               <Feather name="map" size={18} color={colors.primary} />
@@ -344,7 +195,10 @@ export default function ExploreScreen() {
           <View
             style={[
               styles.search,
-              { backgroundColor: colors.card, borderColor: colors.border },
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              },
             ]}
           >
             <Feather name="search" size={16} color={colors.mutedForeground} />
@@ -406,7 +260,9 @@ export default function ExploreScreen() {
         {visible.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyEmoji}>🔍</Text>
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+            <Text
+              style={[styles.emptyText, { color: colors.mutedForeground }]}
+            >
               No results for "{query}"
             </Text>
           </View>
@@ -428,14 +284,14 @@ export default function ExploreScreen() {
 
       {/* Save to Trip modal */}
       <Modal
-        visible={modalPost !== null}
+        visible={saveModalPost !== null}
         transparent
         animationType="slide"
-        onRequestClose={() => setModalPost(null)}
+        onRequestClose={() => setSaveModalPost(null)}
       >
         <Pressable
           style={styles.overlay}
-          onPress={() => setModalPost(null)}
+          onPress={() => setSaveModalPost(null)}
         >
           <Pressable
             style={[styles.sheet, { backgroundColor: colors.card }]}
@@ -447,20 +303,28 @@ export default function ExploreScreen() {
             <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
               Add to Trip
             </Text>
-            <Text style={[styles.sheetSub, { color: colors.mutedForeground }]}>
+            <Text
+              style={[styles.sheetSub, { color: colors.mutedForeground }]}
+            >
               Which trip should this spot go to?
             </Text>
-            <ScrollView style={{ maxHeight: 300 }} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              style={{ maxHeight: 300 }}
+              showsVerticalScrollIndicator={false}
+            >
               {trips.map((trip) => (
                 <TouchableOpacity
                   key={trip.id}
-                  style={[styles.tripRow, { borderBottomColor: colors.border }]}
+                  style={[
+                    styles.tripRow,
+                    { borderBottomColor: colors.border },
+                  ]}
                   onPress={() => confirmSave(trip.id)}
                   activeOpacity={0.8}
                 >
                   <View
                     style={[
-                      styles.tripAccent,
+                      styles.tripDot,
                       { backgroundColor: trip.accentColor },
                     ]}
                   />
@@ -492,10 +356,13 @@ export default function ExploreScreen() {
             </ScrollView>
             <TouchableOpacity
               style={[styles.cancelBtn, { borderColor: colors.border }]}
-              onPress={() => setModalPost(null)}
+              onPress={() => setSaveModalPost(null)}
             >
               <Text
-                style={[styles.cancelText, { color: colors.mutedForeground }]}
+                style={[
+                  styles.cancelText,
+                  { color: colors.mutedForeground },
+                ]}
               >
                 Cancel
               </Text>
@@ -509,12 +376,7 @@ export default function ExploreScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-
-  /* Header */
-  header: {
-    paddingHorizontal: H_PAD,
-    paddingBottom: 12,
-  },
+  header: { paddingHorizontal: H_PAD, paddingBottom: 12 },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -539,8 +401,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
-  /* Search */
   search: {
     flexDirection: "row",
     alignItems: "center",
@@ -556,12 +416,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Inter_400Regular",
   },
-
-  /* Tabs */
-  tabs: {
-    flexDirection: "row",
-    gap: 4,
-  },
+  tabs: { flexDirection: "row", gap: 4 },
   tabItem: {
     paddingHorizontal: 4,
     paddingVertical: 8,
@@ -570,29 +425,15 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   tabLabel: { fontSize: 15 },
-  tabBar: {
-    height: 2.5,
-    width: "100%",
-    borderRadius: 2,
-  },
-
-  /* Grid */
+  tabBar: { height: 2.5, width: "100%", borderRadius: 2 },
   grid: {
     flexDirection: "row",
     paddingHorizontal: H_PAD,
     gap: GAP,
     marginTop: 4,
   },
-  col: {
-    flex: 1,
-    gap: GAP,
-  },
-
-  /* Card */
-  card: {
-    borderRadius: 20,
-    overflow: "hidden",
-  },
+  col: { flex: 1, gap: GAP },
+  card: { borderRadius: 20, overflow: "hidden" },
   cardImg: {
     borderRadius: 20,
     overflow: "hidden",
@@ -616,8 +457,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
-  /* Caption */
   cardCaption: {
     paddingTop: 8,
     paddingHorizontal: 4,
@@ -628,11 +467,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: "Inter_600SemiBold",
     lineHeight: 18,
-  },
-  cardMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
   },
   cardLoc: {
     fontSize: 11,
@@ -650,21 +484,10 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     marginTop: 2,
   },
-  addBtnText: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-  },
-
-  /* Empty */
-  empty: {
-    alignItems: "center",
-    paddingVertical: 60,
-    gap: 10,
-  },
+  addBtnText: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  empty: { alignItems: "center", paddingVertical: 60, gap: 10 },
   emptyEmoji: { fontSize: 44 },
   emptyText: { fontSize: 15, fontFamily: "Inter_400Regular" },
-
-  /* Modal */
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.65)",
@@ -683,11 +506,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginBottom: 22,
   },
-  sheetTitle: {
-    fontSize: 22,
-    fontFamily: "Inter_700Bold",
-    marginBottom: 4,
-  },
+  sheetTitle: { fontSize: 22, fontFamily: "Inter_700Bold", marginBottom: 4 },
   sheetSub: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
@@ -700,15 +519,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     gap: 12,
   },
-  tripAccent: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  tripName: {
-    fontSize: 15,
-    fontFamily: "Inter_600SemiBold",
-  },
+  tripDot: { width: 10, height: 10, borderRadius: 5 },
+  tripName: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   tripDest: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
@@ -728,8 +540,5 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
   },
-  cancelText: {
-    fontSize: 15,
-    fontFamily: "Inter_500Medium",
-  },
+  cancelText: { fontSize: 15, fontFamily: "Inter_500Medium" },
 });

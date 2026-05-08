@@ -1,0 +1,338 @@
+Sim — há alguns problemas claros de UI/implementação nessas screenshots.
+E todos parecem vir da mesma origem: sizing + icon rendering.
+
+Vou separar por problemas.
+
+---
+
+# 1. Ícones não aparecem
+
+## Problema
+
+Os ícones estão a renderizar como:
+
+* quadrados
+* caracteres estranhos
+* símbolos quebrados
+
+Isso normalmente acontece por uma destas razões:
+
+### Possíveis causas
+
+#### A) Font package não carregado
+
+Muito provável.
+
+Se estiveres a usar:
+
+* Lucide
+* FontAwesome
+* Material Icons
+* Ionicons
+* Heroicons
+
+a font pode não estar importada corretamente.
+
+---
+
+#### B) Nome dos ícones inválido
+
+Exemplo:
+
+```tsx
+<HomeIcon />
+```
+
+mas o package espera:
+
+```tsx
+<Home />
+```
+
+---
+
+#### C) Ícones com cor igual ao fundo
+
+Menos provável aqui, porque aparecem “símbolos estranhos”.
+
+---
+
+#### D) Font family quebrada
+
+Muito provável se:
+
+* estás a usar Expo
+* React Native
+* custom fonts
+* Tailwind Native
+
+---
+
+# O que eu faria imediatamente
+
+## Se for React Native + Expo
+
+Verificar:
+
+```bash
+npx expo install @expo/vector-icons
+```
+
+Depois:
+
+```tsx
+import { Ionicons } from '@expo/vector-icons';
+```
+
+E:
+
+```tsx
+<Ionicons name="home-outline" size={24} color="#8B5CF6" />
+```
+
+---
+
+## Se for Lucide React Native
+
+Provavelmente o problema.
+
+Alguns ícones não funcionam bem em RN dependendo da versão.
+
+Melhor solução:
+
+```bash
+npm install lucide-react-native
+```
+
+Depois:
+
+```tsx
+import { Home, Map, User } from "lucide-react-native";
+```
+
+---
+
+# 2. Botões cortados em “My Trips”
+
+## Problema
+
+Os category pills:
+
+* têm altura demasiado pequena
+* padding vertical insuficiente
+* font line-height errada
+
+Resultado:
+
+* texto cortado
+* labels invisíveis
+
+---
+
+# Causa provável
+
+Tens algo tipo:
+
+```tsx
+height: 28
+```
+
+ou:
+
+```tsx
+py-1
+```
+
+quando devias ter:
+
+```tsx
+minHeight: 36-40
+paddingVertical: 8
+```
+
+---
+
+# Como resolver
+
+## Pills corretas
+
+```tsx
+<View className="px-4 py-2 rounded-full bg-[#151525] mr-2">
+  <Text className="text-sm text-white">All</Text>
+</View>
+```
+
+ou:
+
+```tsx
+height: 40
+paddingHorizontal: 16
+justifyContent: center
+```
+
+---
+
+# 3. Bottom navigation quebrada
+
+## Problema
+
+Todos os ícones do navbar estão partidos.
+
+Isso confirma:
+
+> o package de ícones inteiro falhou.
+
+Não é problema individual.
+
+---
+
+# 4. Ícones alinhados mal nas settings
+
+Na página profile:
+
+* os ícones da esquerda estão esmagados
+* parecem 12x12 dentro de caixas grandes
+
+## Causa
+
+Container maior que o icon size.
+
+Provavelmente:
+
+```tsx
+w-10 h-10
+```
+
+mas:
+
+```tsx
+size={12}
+```
+
+---
+
+# Correção ideal
+
+```tsx
+<Settings size={18} color="#8B5CF6" />
+```
+
+Container:
+
+```tsx
+w-10 h-10 rounded-xl items-center justify-center
+```
+
+---
+
+# 5. Espaçamentos inconsistentes
+
+A UI está boa visualmente, MAS:
+
+* há demasiados containers
+* muitos borders
+* muitos backgrounds separados
+
+Isso faz a app parecer:
+
+> template mobile
+
+em vez de:
+
+> produto premium.
+
+---
+
+# O que eu ajustaria globalmente
+
+## A) Menos borders
+
+Atualmente:
+
+```tsx
+border border-white/10
+```
+
+em todo lado.
+
+Reduz isso.
+
+---
+
+## B) Mais transparência
+
+Usa:
+
+```tsx
+bg-white/[0.03]
+```
+
+em vez de caixas pesadas.
+
+---
+
+## C) Navbar mais limpa
+
+Atualmente parece apertada.
+
+Faria:
+
+* mais altura
+* menos borda
+* active state mais subtil
+
+---
+
+# 6. Problema técnico provável principal
+
+Honestamente?
+
+Parece MUITO que:
+
+* mudaram package de ícones
+  OU
+* Tailwind/nativewind quebrou renderização
+  OU
+* fonts não carregaram após build
+
+---
+
+# Prioridade de fixes
+
+## PRIORIDADE 1
+
+Resolver icon package.
+
+Sem isso:
+
+* a app parece quebrada imediatamente.
+
+---
+
+## PRIORIDADE 2
+
+Fix pills height.
+
+---
+
+## PRIORIDADE 3
+
+Refinar spacing/layout.
+
+---
+
+# Resultado esperado
+
+Depois desses fixes:
+
+* a app vai parecer MUITO mais premium
+* muito mais consistente
+* muito mais próxima de:
+
+  * Airbnb
+  * Notion mobile
+  * Pinterest dark
+  * Arc browser mobile feel
+
+A base visual está boa.
+O problema aqui é implementação UI, não direção de design.
