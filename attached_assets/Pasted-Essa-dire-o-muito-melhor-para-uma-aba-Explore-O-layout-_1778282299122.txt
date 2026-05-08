@@ -1,0 +1,316 @@
+Essa direção é muito melhor para uma aba “Explore”.
+O layout atual parece mais uma página de “convites e partilhas privadas”, não uma experiência de descoberta. Se queres algo estilo Pinterest + Instagram Reels focado em viagens, a estrutura precisa mudar bastante.
+
+O que eu faria:
+
+# Objetivo da Explore
+
+Transformar essa página num feed visual de descoberta de viagens:
+
+* vídeos curtos (tipo reels)
+* fotos inspiracionais
+* restaurantes
+* cafés
+* praias
+* rooftops
+* hidden gems
+* itinerários
+* dicas locais
+* hotéis
+* experiências
+
+Tudo organizado por destinos e interesses.
+
+---
+
+# Estrutura ideal da página
+
+## 1. Header mais forte
+
+Em vez de:
+
+> “Join trips & discover places”
+
+Faz algo mais aspiracional:
+
+### Explore
+
+“Discover places through travelers”
+
+ou
+
+“Find your next adventure”
+
+Adicionar:
+
+* barra de pesquisa
+* filtros
+* localização atual
+* categorias
+
+Exemplo:
+
+* 🔍 Search “Tokyo sushi”
+* Chips:
+
+  * Beaches
+  * Food
+  * Nightlife
+  * Nature
+  * Luxury
+  * Budget
+  * Hidden Gems
+
+---
+
+# 2. Feed estilo Pinterest
+
+Aqui está a mudança principal.
+
+## Layout Masonry/Grid
+
+Tipo:
+
+* Pinterest
+* Airbnb experiences
+* Lemon8
+
+Mistura:
+
+* fotos verticais
+* vídeos
+* mini guias
+
+Cards:
+
+* imagem grande
+* nome do lugar
+* cidade/país
+* user avatar
+* saves
+* likes
+
+Exemplo:
+
+📍 “Sunset at Oia”
+Santorini, Greece
+
+📍 “Best ramen under €10”
+Tokyo, Japan
+
+📍 “Hidden waterfall”
+Bali, Indonesia
+
+---
+
+# 3. Reels de viagem (MUITO importante)
+
+Tens potencial enorme aqui.
+
+Uma tab ou toggle:
+
+* Grid
+* Reels
+
+## Reels:
+
+Full-screen vertical video:
+
+* swipe up/down
+* música
+* localização
+* save
+* share
+* “Add to trip”
+
+Isto é o que faz apps de travel crescerem hoje.
+
+As pessoas querem:
+
+* ver o lugar
+* sentir o ambiente
+* descobrir spots rápidos
+
+---
+
+# 4. Botão “Save to Trip”
+
+Feature chave.
+
+Em cada post:
+
+* Save
+* Add to itinerary
+* Share with trip members
+
+Exemplo:
+
+> “Add this café to Bali Retreat?”
+
+Isso conecta o Explore com o core da app.
+
+Muito importante para retenção.
+
+---
+
+# 5. Conteúdo por categorias
+
+## Suggested Sections
+
+### Trending Now
+
+Destinos virais
+
+### Hidden Gems
+
+Locais menos turísticos
+
+### Food Finds
+
+Restaurantes e cafés
+
+### Weekend Trips
+
+Viagens rápidas
+
+### Shared by Friends
+
+Conteúdo de amigos
+
+### Near You
+
+Baseado na localização
+
+---
+
+# 6. Sistema social leve
+
+Não cries outra rede social completa.
+
+Mantém:
+
+* likes
+* saves
+* comments simples
+* follow opcional
+
+Mas foco principal:
+
+> descoberta + planeamento de viagem
+
+Não conversa infinita.
+
+---
+
+# 7. Visual direction
+
+O design atual está bom:
+
+* dark mode premium
+* neon purple/blue
+* clean
+
+Mas a Explore precisa:
+
+* mais imagens
+* menos caixas vazias
+* menos texto
+* mais emoção visual
+
+Viagens vendem-se visualmente.
+
+---
+
+# Estrutura que eu faria
+
+## Bottom nav
+
+* Home
+* Trips
+* Explore
+* Profile
+
+## Explore Tabs
+
+* For You
+* Reels
+* Food
+* Nature
+* Cities
+
+---
+
+# Melhor feature possível
+
+## “Travel Collections”
+
+Usuários criam:
+
+* “Best cafés in Paris”
+* “Bali hidden gems”
+* “Tokyo anime spots”
+
+Outros podem:
+
+* seguir
+* salvar
+* importar para viagem
+
+Isso é MUITO forte.
+
+Pinterest + Google Maps + Instagram.
+
+---
+
+# O maior erro que deves evitar
+
+Não transformar Explore em:
+
+* feed genérico
+* fotos aleatórias
+* social network comum
+
+A app deve sempre responder:
+
+> “Como isto ajuda alguém a viajar melhor?”
+
+Essa é a diferença entre:
+
+* app bonita
+  e
+* produto realmente útil.
+
+---
+
+# Minha recomendação
+
+A Explore devia ter:
+
+## Feed principal:
+
+Pinterest masonry
+
+## Aba secundária:
+
+Travel reels
+
+## CTA principal:
+
+“Save to Trip”
+
+## Conteúdo:
+
+UGC de viagens apenas
+
+## Algoritmo:
+
+baseado em:
+
+* destinos salvos
+* trips criadas
+* amigos
+* interesses
+
+---
+
+Essa ideia tem MUITO mais potencial do que a tela atual.
