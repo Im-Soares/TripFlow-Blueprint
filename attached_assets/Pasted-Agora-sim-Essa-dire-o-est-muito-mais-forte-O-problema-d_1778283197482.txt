@@ -1,0 +1,256 @@
+Agora sim. Essa direção está muito mais forte.
+
+O problema da primeira versão é que ainda parecia uma “dashboard de app”.
+O que tu queres é uma experiência de descoberta visual. Mais emocional. Mais scrollable. Mais “quero guardar isto para a minha viagem”.
+
+E sim:
+
+* remover categorias é a decisão certa
+* manter apenas:
+
+  * For You
+  * Trending
+  * All
+    é muito mais clean.
+
+A simplicidade vai fazer a app parecer premium.
+
+---
+
+# O que eu faria
+
+## Header minimalista
+
+### Explore
+
+“Find your next adventure”
+
+À direita:
+
+* botão mapa
+  ou
+* botão reels
+
+---
+
+# Search bar
+
+Grande.
+Muito importante.
+
+Placeholder:
+
+* “Search destinations, restaurants, cafés…”
+
+ou
+
+* “Search Tokyo sushi or Bali waterfalls”
+
+Mantém o visual dark premium atual.
+
+---
+
+# Tabs simples
+
+Apenas:
+
+* For You
+* Trending
+* All
+
+Com underline glow roxo/azul igual ao branding atual.
+
+Nada mais.
+
+Sem chips.
+Sem excesso de filtros.
+Sem poluição visual.
+
+---
+
+# Feed estilo Pinterest (principal mudança)
+
+Aqui é onde a tela ganha vida.
+
+## Layout Masonry
+
+Como Pinterest:
+
+* cards de alturas diferentes
+* imagens grandes
+* vídeos misturados
+* scroll infinito
+
+---
+
+# Como os cards devem ser
+
+Minimalistas.
+
+## Card
+
+Imagem ocupa 90% do card.
+
+Em baixo apenas:
+
+* título
+* localização
+
+Exemplo:
+
+📍 Best ramen under ¥800
+Tokyo, Japan
+
+ou
+
+📍 Hidden beach
+Bali, Indonesia
+
+---
+
+# Importante:
+
+NÃO colocar:
+
+* muitos botões
+* likes gigantes
+* comentários
+* texto demais
+
+Pinterest funciona porque:
+
+> conteúdo primeiro, UI depois.
+
+---
+
+# Visual do Tripflow
+
+Mantém:
+
+* dark navy background
+* purple neon accents
+* rounded corners
+* glow subtil
+
+Mas:
+
+## O feed deve respirar mais
+
+Atualmente a UI parece:
+
+* muito boxed
+* muito dashboard
+
+O Pinterest feel precisa:
+
+* mais espaço visual
+* menos borders
+* menos containers pesados
+
+---
+
+# Recomendo este comportamento
+
+## Cards
+
+### Imagens
+
+* border radius 18–24
+* sem stroke pesado
+* sombras suaves
+
+### Vídeos
+
+* autoplay muted
+* preview loop
+* pequeno ícone de vídeo
+
+---
+
+# Muito importante:
+
+## Misturar conteúdo editorial + user generated
+
+Exemplo feed:
+
+* “Best cafés in Paris”
+* “3 hidden spots in Kyoto”
+* “Sunset beach club”
+* “24h in Seoul”
+* “Best pasta in Rome”
+
+Isso cria sensação de descoberta contínua.
+
+---
+
+# Estrutura ideal da tela
+
+## Explore
+
+[ Search bar ]
+
+For You | Trending | All
+
+↓
+Pinterest masonry feed
+
+Fim.
+
+Só isso.
+
+Não precisas mais.
+
+---
+
+# O maior acerto
+
+Tu escolheste:
+
+> simplicidade visual
+
+Isso é exatamente o correto.
+
+Porque esta tela deve servir para:
+
+* inspirar
+* descobrir
+* guardar
+* adicionar à viagem
+
+Não para “gerir coisas”.
+
+---
+
+# O que eu removeria da versão atual
+
+❌ cards coloridos de collections
+❌ excesso de seções
+❌ demasiados textos
+❌ demasiados componentes diferentes
+❌ aparência dashboard/webapp
+
+---
+
+# O que eu adicionaria
+
+✅ fullscreen image feel
+✅ masonry layout
+✅ edge-to-edge visuals
+✅ subtle animations
+✅ smooth scrolling
+✅ immersive discovery
+
+---
+
+# Resultado final ideal
+
+Imagina:
+
+* Pinterest
+* Airbnb inspiration
+* Instagram travel reels
+* numa estética dark premium
+
+Isso combina MUITO mais com o Tripflow.
+
+A tua nova direção está muito mais perto de um produto que as pessoas realmente vão abrir todos os dias.

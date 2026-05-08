@@ -21,223 +21,161 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
-const COLUMN_WIDTH = (SCREEN_WIDTH - 20 - 20 - 10) / 2;
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const GAP = 8;
+const H_PAD = 16;
+const COL_W = (SCREEN_WIDTH - H_PAD * 2 - GAP) / 2;
 
-const COVER_IMAGES: Record<string, ImageSourcePropType> = {
+const COVER: Record<string, ImageSourcePropType> = {
   santorini: require("@/assets/images/trip_santorini.png"),
   tokyo: require("@/assets/images/trip_tokyo.png"),
   bali: require("@/assets/images/trip_bali.png"),
 };
 
-const CATEGORIES = [
-  { id: "all", label: "All" },
-  { id: "beaches", label: "🏖️ Beaches" },
-  { id: "food", label: "🍜 Food" },
-  { id: "nightlife", label: "🌃 Nightlife" },
-  { id: "nature", label: "🌿 Nature" },
-  { id: "luxury", label: "💎 Luxury" },
-  { id: "hidden", label: "🗝️ Hidden Gems" },
-];
-
-const FEED_TABS = ["For You", "Trending", "Food", "Nature", "Cities"];
-
-type ExplorePost = {
+type Post = {
   id: string;
   title: string;
   location: string;
-  category: string;
-  likes: number;
-  saves: number;
-  tall: boolean;
-  coverKey?: string;
+  tag: "foryou" | "trending" | "all";
+  imgH: number;
+  cover?: string;
+  grad?: [string, string];
   emoji?: string;
-  color?: string[];
 };
 
-const EXPLORE_POSTS: ExplorePost[] = [
+const POSTS: Post[] = [
   {
-    id: "e1",
+    id: "p1",
     title: "Sunset at Oia",
     location: "Santorini, Greece",
-    category: "nature",
-    likes: 2847,
-    saves: 412,
-    coverKey: "santorini",
-    tall: true,
+    tag: "foryou",
+    imgH: 240,
+    cover: "santorini",
   },
   {
-    id: "e2",
+    id: "p2",
     title: "Best ramen under ¥800",
     location: "Tokyo, Japan",
-    category: "food",
-    likes: 1923,
-    saves: 334,
-    coverKey: "tokyo",
-    tall: false,
+    tag: "trending",
+    imgH: 164,
+    cover: "tokyo",
   },
   {
-    id: "e3",
+    id: "p3",
     title: "Hidden waterfall trail",
     location: "Ubud, Bali",
-    category: "nature",
-    likes: 3102,
-    saves: 567,
-    coverKey: "bali",
-    tall: false,
+    tag: "foryou",
+    imgH: 164,
+    cover: "bali",
   },
   {
-    id: "e4",
-    title: "Rooftop bar hopping",
+    id: "p4",
+    title: "Rooftop bar at midnight",
     location: "Bangkok, Thailand",
-    category: "nightlife",
-    likes: 892,
-    saves: 156,
+    tag: "trending",
+    imgH: 220,
+    grad: ["#FF6B6B", "#C2185B"],
     emoji: "🍹",
-    color: ["#FF6B6B", "#C2185B"],
-    tall: true,
   },
   {
-    id: "e5",
+    id: "p5",
     title: "Secret beach cove",
     location: "Maldives",
-    category: "beaches",
-    likes: 4211,
-    saves: 789,
+    tag: "foryou",
+    imgH: 164,
+    grad: ["#4ECDC4", "#006E7F"],
     emoji: "🏝️",
-    color: ["#4ECDC4", "#006E7F"],
-    tall: false,
   },
   {
-    id: "e6",
+    id: "p6",
     title: "Morning café ritual",
     location: "Paris, France",
-    category: "food",
-    likes: 1456,
-    saves: 203,
+    tag: "all",
+    imgH: 220,
+    grad: ["#7C6FF7", "#3B2FB5"],
     emoji: "☕",
-    color: ["#7C6FF7", "#3B2FB5"],
-    tall: true,
   },
   {
-    id: "e7",
+    id: "p7",
     title: "Neon streets at midnight",
     location: "Seoul, South Korea",
-    category: "nightlife",
-    likes: 2103,
-    saves: 389,
+    tag: "trending",
+    imgH: 164,
+    grad: ["#C44BFF", "#FF6B6B"],
     emoji: "🌆",
-    color: ["#C44BFF", "#FF6B6B"],
-    tall: false,
   },
   {
-    id: "e8",
+    id: "p8",
     title: "Overwater villa escape",
     location: "Maldives",
-    category: "luxury",
-    likes: 5890,
-    saves: 1102,
+    tag: "foryou",
+    imgH: 240,
+    grad: ["#0099CC", "#4ECDC4"],
     emoji: "🌊",
-    color: ["#0099CC", "#4ECDC4"],
-    tall: true,
   },
   {
-    id: "e9",
-    title: "Alpine hiking sunrise",
+    id: "p9",
+    title: "Alpine sunrise hike",
     location: "Swiss Alps",
-    category: "nature",
-    likes: 2780,
-    saves: 441,
+    tag: "all",
+    imgH: 164,
+    grad: ["#2E7D52", "#4ECDC4"],
     emoji: "⛰️",
-    color: ["#2E7D52", "#4ECDC4"],
-    tall: false,
   },
   {
-    id: "e10",
+    id: "p10",
     title: "Night market feast",
     location: "Chiang Mai, Thailand",
-    category: "food",
-    likes: 1677,
-    saves: 298,
+    tag: "all",
+    imgH: 210,
+    grad: ["#FFB347", "#FF6B6B"],
     emoji: "🥢",
-    color: ["#FFB347", "#FF6B6B"],
-    tall: true,
   },
   {
-    id: "e11",
+    id: "p11",
     title: "Secret garden café",
     location: "Kyoto, Japan",
-    category: "hidden",
-    likes: 934,
-    saves: 217,
+    tag: "foryou",
+    imgH: 164,
+    grad: ["#FF6B6B", "#FFB347"],
     emoji: "🌸",
-    color: ["#FF6B6B", "#FFB347"],
-    tall: false,
   },
   {
-    id: "e12",
+    id: "p12",
     title: "Turquoise lagoon dive",
     location: "Phi Phi, Thailand",
-    category: "beaches",
-    likes: 3445,
-    saves: 623,
+    tag: "trending",
+    imgH: 180,
+    grad: ["#4ECDC4", "#7C6FF7"],
     emoji: "🐠",
-    color: ["#4ECDC4", "#7C6FF7"],
-    tall: false,
+  },
+  {
+    id: "p13",
+    title: "24h in Seoul",
+    location: "Seoul, South Korea",
+    tag: "all",
+    imgH: 200,
+    grad: ["#7C6FF7", "#C44BFF"],
+    emoji: "🗼",
+  },
+  {
+    id: "p14",
+    title: "Best pasta in Rome",
+    location: "Rome, Italy",
+    tag: "trending",
+    imgH: 164,
+    grad: ["#FFB347", "#E65100"],
+    emoji: "🍝",
   },
 ];
 
-type Collection = {
-  id: string;
-  title: string;
-  author: string;
-  count: number;
-  emoji: string;
-  color: string[];
-};
+const TABS = [
+  { id: "all", label: "All" },
+  { id: "foryou", label: "For You" },
+  { id: "trending", label: "Trending" },
+] as const;
 
-const COLLECTIONS: Collection[] = [
-  {
-    id: "c1",
-    title: "Best cafés in Paris",
-    author: "Maria R.",
-    count: 12,
-    emoji: "☕",
-    color: ["#7C6FF7", "#3B2FB5"],
-  },
-  {
-    id: "c2",
-    title: "Bali hidden gems",
-    author: "Alex T.",
-    count: 8,
-    emoji: "🌴",
-    color: ["#4ECDC4", "#006E7F"],
-  },
-  {
-    id: "c3",
-    title: "Tokyo anime spots",
-    author: "Kenji M.",
-    count: 15,
-    emoji: "🎌",
-    color: ["#FF6B6B", "#C2185B"],
-  },
-  {
-    id: "c4",
-    title: "Budget Europe 2w",
-    author: "Sophie L.",
-    count: 20,
-    emoji: "🎒",
-    color: ["#FFB347", "#E65100"],
-  },
-  {
-    id: "c5",
-    title: "Maldives on €80/day",
-    author: "Chris B.",
-    count: 9,
-    emoji: "🏝️",
-    color: ["#0099CC", "#4ECDC4"],
-  },
-];
+type TabId = (typeof TABS)[number]["id"];
 
 export default function ExploreScreen() {
   const colors = useColors();
@@ -245,18 +183,16 @@ export default function ExploreScreen() {
   const { trips } = useApp();
 
   const [query, setQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [activeFeedTab, setActiveFeedTab] = useState("For You");
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
-  const [savedPosts, setSavedPosts] = useState<Set<string>>(new Set());
-  const [saveModalPost, setSaveModalPost] = useState<string | null>(null);
+  const [tab, setTab] = useState<TabId>("all");
+  const [saved, setSaved] = useState<Set<string>>(new Set());
+  const [liked, setLiked] = useState<Set<string>>(new Set());
+  const [modalPost, setModalPost] = useState<string | null>(null);
 
-  const topInset = Platform.OS === "web" ? 67 : insets.top;
-  const bottomPad =
-    Platform.OS === "web" ? 34 + 84 : insets.bottom + 100;
+  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const botPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 100;
 
-  const filteredPosts = EXPLORE_POSTS.filter((p) => {
-    if (activeCategory !== "all" && p.category !== activeCategory) return false;
+  const visible = POSTS.filter((p) => {
+    if (tab !== "all" && p.tag !== tab) return false;
     if (
       query &&
       !p.title.toLowerCase().includes(query.toLowerCase()) &&
@@ -266,120 +202,112 @@ export default function ExploreScreen() {
     return true;
   });
 
-  const leftPosts = filteredPosts.filter((_, i) => i % 2 === 0);
-  const rightPosts = filteredPosts.filter((_, i) => i % 2 === 1);
+  const left = visible.filter((_, i) => i % 2 === 0);
+  const right = visible.filter((_, i) => i % 2 === 1);
 
   function toggleLike(id: string) {
-    setLikedPosts((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+    setLiked((prev) => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
     });
   }
 
-  function saveToTrip(tripId: string) {
-    if (!saveModalPost) return;
-    const postId = saveModalPost;
-    setSavedPosts((prev) => {
-      const next = new Set(prev);
-      next.add(postId);
-      return next;
-    });
-    setSaveModalPost(null);
+  function confirmSave(tripId: string) {
+    if (!modalPost) return;
+    const id = modalPost;
+    setSaved((prev) => new Set(prev).add(id));
+    setModalPost(null);
     const trip = trips.find((t) => t.id === tripId);
-    if (trip) {
-      Alert.alert("Saved! 🎉", `Added to "${trip.title}"`);
-    }
+    if (trip) Alert.alert("Saved!", `Added to "${trip.title}" ✈️`);
   }
 
-  function renderCard(post: ExplorePost) {
-    const imgHeight = post.tall ? 210 : 148;
-    const isLiked = likedPosts.has(post.id);
-    const isSaved = savedPosts.has(post.id);
+  function Card({ post }: { post: Post }) {
+    const isSaved = saved.has(post.id);
+    const isLiked = liked.has(post.id);
 
     return (
       <TouchableOpacity
-        key={post.id}
-        style={[styles.masonryCard, { backgroundColor: colors.card }]}
-        activeOpacity={0.9}
+        style={[styles.card, { width: COL_W }]}
+        activeOpacity={0.93}
       >
-        <View style={[styles.cardImageWrap, { height: imgHeight }]}>
-          {post.coverKey ? (
+        {/* Image area */}
+        <View style={[styles.cardImg, { height: post.imgH }]}>
+          {post.cover ? (
             <Image
-              source={COVER_IMAGES[post.coverKey]}
-              style={styles.cardImage}
+              source={COVER[post.cover]}
+              style={StyleSheet.absoluteFill}
               resizeMode="cover"
             />
           ) : (
             <LinearGradient
-              colors={(post.color ?? ["#7C6FF7", "#3B2FB5"]) as [string, string]}
-              style={styles.cardImage}
+              colors={post.grad!}
+              style={StyleSheet.absoluteFill}
             />
           )}
-          {!post.coverKey && post.emoji && (
-            <View style={styles.cardEmojiWrap}>
-              <Text style={styles.cardEmoji}>{post.emoji}</Text>
+          {!post.cover && post.emoji && (
+            <View style={styles.emojiWrap}>
+              <Text style={styles.emoji}>{post.emoji}</Text>
             </View>
           )}
+          {/* Subtle bottom fade */}
           <LinearGradient
-            colors={["transparent", "rgba(0,0,0,0.55)"]}
-            style={[StyleSheet.absoluteFill, { borderRadius: 14 }]}
+            colors={["transparent", "rgba(0,0,0,0.45)"]}
+            style={[StyleSheet.absoluteFill, styles.fade]}
           />
+          {/* Bookmark */}
           <TouchableOpacity
             style={[
               styles.bookmarkBtn,
               isSaved && { backgroundColor: colors.primary },
             ]}
-            onPress={() =>
-              isSaved ? null : setSaveModalPost(post.id)
-            }
-            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            onPress={() => (isSaved ? null : setModalPost(post.id))}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Feather
-              name="bookmark"
-              size={11}
+              name={isSaved ? "bookmark" : "bookmark"}
+              size={12}
               color="#fff"
+              style={isSaved ? { opacity: 1 } : { opacity: 0.9 }}
             />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.cardBody}>
+        {/* Caption */}
+        <View style={styles.cardCaption}>
           <Text
             style={[styles.cardTitle, { color: colors.foreground }]}
             numberOfLines={2}
           >
             {post.title}
           </Text>
-          <Text
-            style={[styles.cardLoc, { color: colors.mutedForeground }]}
-            numberOfLines={1}
-          >
-            📍 {post.location}
-          </Text>
-          <View style={styles.cardFooter}>
+          <View style={styles.cardMeta}>
+            <Text
+              style={[styles.cardLoc, { color: colors.mutedForeground }]}
+              numberOfLines={1}
+            >
+              📍 {post.location}
+            </Text>
             <TouchableOpacity
-              style={styles.likeRow}
               onPress={() => toggleLike(post.id)}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
             >
               <Feather
                 name="heart"
-                size={11}
+                size={12}
                 color={isLiked ? "#FF6B6B" : colors.mutedForeground}
               />
-              <Text style={[styles.likeCount, { color: colors.mutedForeground }]}>
-                {(post.likes + (isLiked ? 1 : 0)).toLocaleString()}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.addTripBtn}
-              onPress={() => setSaveModalPost(post.id)}
-            >
-              <Text style={[styles.addTripText, { color: colors.primary }]}>
-                + Trip
-              </Text>
             </TouchableOpacity>
           </View>
+          <TouchableOpacity
+            style={[styles.addBtn, { borderColor: colors.border }]}
+            onPress={() => setModalPost(post.id)}
+          >
+            <Feather name="plus" size={11} color={colors.primary} />
+            <Text style={[styles.addBtnText, { color: colors.primary }]}>
+              Add to trip
+            </Text>
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
     );
@@ -388,23 +316,25 @@ export default function ExploreScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: bottomPad }}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: botPad }}
       >
         {/* Header */}
-        <View style={[styles.header, { paddingTop: topInset + 16 }]}>
-          <View style={styles.headerTop}>
+        <View style={[styles.header, { paddingTop: topPad + 14 }]}>
+          <View style={styles.headerRow}>
             <View>
               <Text style={[styles.title, { color: colors.foreground }]}>
                 Explore
               </Text>
-              <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+              <Text style={[styles.tagline, { color: colors.mutedForeground }]}>
                 Find your next adventure
               </Text>
             </View>
             <TouchableOpacity
-              style={[styles.mapBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+              style={[
+                styles.iconBtn,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
             >
               <Feather name="map" size={18} color={colors.primary} />
             </TouchableOpacity>
@@ -413,14 +343,14 @@ export default function ExploreScreen() {
           {/* Search */}
           <View
             style={[
-              styles.searchBar,
+              styles.search,
               { backgroundColor: colors.card, borderColor: colors.border },
             ]}
           >
             <Feather name="search" size={16} color={colors.mutedForeground} />
             <TextInput
               style={[styles.searchInput, { color: colors.foreground }]}
-              placeholder='Search "Tokyo sushi" or "Bali waterfalls"'
+              placeholder="Search destinations, restaurants, cafés…"
               placeholderTextColor={colors.mutedForeground}
               value={query}
               onChangeText={setQuery}
@@ -432,211 +362,141 @@ export default function ExploreScreen() {
               </TouchableOpacity>
             )}
           </View>
-        </View>
 
-        {/* Category chips */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsRow}
-        >
-          {CATEGORIES.map((cat) => {
-            const active = activeCategory === cat.id;
-            return (
-              <TouchableOpacity
-                key={cat.id}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: active ? colors.primary : colors.card,
-                    borderColor: active ? colors.primary : colors.border,
-                  },
-                ]}
-                onPress={() => setActiveCategory(cat.id)}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    { color: active ? "#fff" : colors.mutedForeground },
-                  ]}
+          {/* Tabs */}
+          <View style={styles.tabs}>
+            {TABS.map((t) => {
+              const active = tab === t.id;
+              return (
+                <TouchableOpacity
+                  key={t.id}
+                  style={styles.tabItem}
+                  onPress={() => setTab(t.id)}
                 >
-                  {cat.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-
-        {/* Feed tabs */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.feedTabsRow}
-        >
-          {FEED_TABS.map((tab) => {
-            const active = activeFeedTab === tab;
-            return (
-              <TouchableOpacity
-                key={tab}
-                style={styles.feedTab}
-                onPress={() => setActiveFeedTab(tab)}
-              >
-                <Text
-                  style={[
-                    styles.feedTabText,
-                    {
-                      color: active ? colors.foreground : colors.mutedForeground,
-                      fontFamily: active ? "Inter_700Bold" : "Inter_400Regular",
-                    },
-                  ]}
-                >
-                  {tab}
-                </Text>
-                {active && (
-                  <View
-                    style={[styles.feedTabBar, { backgroundColor: colors.primary }]}
-                  />
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-
-        {/* Travel Collections */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              Travel Collections
-            </Text>
-            <TouchableOpacity>
-              <Text style={[styles.seeAll, { color: colors.primary }]}>
-                See all
-              </Text>
-            </TouchableOpacity>
+                  <Text
+                    style={[
+                      styles.tabLabel,
+                      {
+                        color: active
+                          ? colors.foreground
+                          : colors.mutedForeground,
+                        fontFamily: active
+                          ? "Inter_700Bold"
+                          : "Inter_400Regular",
+                      },
+                    ]}
+                  >
+                    {t.label}
+                  </Text>
+                  {active && (
+                    <LinearGradient
+                      colors={["#7C6FF7", "#C44BFF"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.tabBar}
+                    />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-          >
-            {COLLECTIONS.map((col) => (
-              <TouchableOpacity
-                key={col.id}
-                style={styles.collectionCard}
-                activeOpacity={0.88}
-              >
-                <LinearGradient
-                  colors={col.color as [string, string]}
-                  style={styles.collectionGradient}
-                >
-                  <Text style={styles.collectionEmoji}>{col.emoji}</Text>
-                  <View style={styles.collectionInfo}>
-                    <Text style={styles.collectionTitle} numberOfLines={2}>
-                      {col.title}
-                    </Text>
-                    <Text style={styles.collectionMeta}>
-                      {col.count} places · by {col.author}
-                    </Text>
-                  </View>
-                  <View style={styles.collectionSaveBtn}>
-                    <Feather name="plus" size={14} color="#fff" />
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
         </View>
 
         {/* Masonry grid */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              {activeCategory === "all"
-                ? activeFeedTab
-                : CATEGORIES.find((c) => c.id === activeCategory)?.label ?? "Discover"}
-            </Text>
-            <Text style={[styles.postCount, { color: colors.mutedForeground }]}>
-              {filteredPosts.length} spots
+        {visible.length === 0 ? (
+          <View style={styles.empty}>
+            <Text style={styles.emptyEmoji}>🔍</Text>
+            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+              No results for "{query}"
             </Text>
           </View>
-
-          {filteredPosts.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>🔍</Text>
-              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                No results found
-              </Text>
+        ) : (
+          <View style={styles.grid}>
+            <View style={styles.col}>
+              {left.map((p) => (
+                <Card key={p.id} post={p} />
+              ))}
             </View>
-          ) : (
-            <View style={styles.masonry}>
-              <View style={styles.masonryCol}>
-                {leftPosts.map((p) => renderCard(p))}
-              </View>
-              <View style={styles.masonryCol}>
-                {rightPosts.map((p) => renderCard(p))}
-              </View>
+            <View style={styles.col}>
+              {right.map((p) => (
+                <Card key={p.id} post={p} />
+              ))}
             </View>
-          )}
-        </View>
+          </View>
+        )}
       </ScrollView>
 
-      {/* Save to Trip Modal */}
+      {/* Save to Trip modal */}
       <Modal
-        visible={saveModalPost !== null}
+        visible={modalPost !== null}
         transparent
         animationType="slide"
-        onRequestClose={() => setSaveModalPost(null)}
+        onRequestClose={() => setModalPost(null)}
       >
         <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setSaveModalPost(null)}
+          style={styles.overlay}
+          onPress={() => setModalPost(null)}
         >
           <Pressable
-            style={[styles.modalSheet, { backgroundColor: colors.card }]}
+            style={[styles.sheet, { backgroundColor: colors.card }]}
             onPress={(e) => e.stopPropagation()}
           >
             <View
-              style={[styles.modalHandle, { backgroundColor: colors.border }]}
+              style={[styles.handle, { backgroundColor: colors.border }]}
             />
-            <Text style={[styles.modalTitle, { color: colors.foreground }]}>
-              Save to Trip
+            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
+              Add to Trip
             </Text>
-            <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>
-              Choose which trip to add this spot to
+            <Text style={[styles.sheetSub, { color: colors.mutedForeground }]}>
+              Which trip should this spot go to?
             </Text>
-            <ScrollView style={{ maxHeight: 320 }}>
+            <ScrollView style={{ maxHeight: 300 }} showsVerticalScrollIndicator={false}>
               {trips.map((trip) => (
                 <TouchableOpacity
                   key={trip.id}
-                  style={[
-                    styles.tripRow,
-                    { borderBottomColor: colors.border },
-                  ]}
-                  onPress={() => saveToTrip(trip.id)}
+                  style={[styles.tripRow, { borderBottomColor: colors.border }]}
+                  onPress={() => confirmSave(trip.id)}
+                  activeOpacity={0.8}
                 >
                   <View
                     style={[
-                      styles.tripDot,
+                      styles.tripAccent,
                       { backgroundColor: trip.accentColor },
                     ]}
                   />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.tripRowTitle, { color: colors.foreground }]}>
+                    <Text
+                      style={[styles.tripName, { color: colors.foreground }]}
+                    >
                       {trip.title}
                     </Text>
-                    <Text style={[styles.tripRowSub, { color: colors.mutedForeground }]}>
-                      {trip.destination} · {trip.status}
+                    <Text
+                      style={[
+                        styles.tripDest,
+                        { color: colors.mutedForeground },
+                      ]}
+                    >
+                      {trip.destination}
                     </Text>
                   </View>
-                  <Feather name="plus" size={18} color={colors.primary} />
+                  <View
+                    style={[
+                      styles.addCircle,
+                      { backgroundColor: colors.primary + "22" },
+                    ]}
+                  >
+                    <Feather name="plus" size={16} color={colors.primary} />
+                  </View>
                 </TouchableOpacity>
               ))}
             </ScrollView>
             <TouchableOpacity
               style={[styles.cancelBtn, { borderColor: colors.border }]}
-              onPress={() => setSaveModalPost(null)}
+              onPress={() => setModalPost(null)}
             >
-              <Text style={[styles.cancelText, { color: colors.mutedForeground }]}>
+              <Text
+                style={[styles.cancelText, { color: colors.mutedForeground }]}
+              >
                 Cancel
               </Text>
             </TouchableOpacity>
@@ -649,214 +509,186 @@ export default function ExploreScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingBottom: 16 },
-  headerTop: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    marginBottom: 14,
+
+  /* Header */
+  header: {
+    paddingHorizontal: H_PAD,
+    paddingBottom: 12,
   },
-  title: { fontSize: 30, fontFamily: "Inter_700Bold" },
-  subtitle: { fontSize: 14, fontFamily: "Inter_400Regular", marginTop: 2 },
-  mapBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 32,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: -0.5,
+  },
+  tagline: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    marginTop: 2,
+  },
+  iconBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
-  searchBar: {
+
+  /* Search */
+  search: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 13,
     gap: 10,
+    marginBottom: 16,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
     fontFamily: "Inter_400Regular",
   },
-  chipsRow: {
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  chipText: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  feedTabsRow: {
-    paddingHorizontal: 20,
-    gap: 4,
-    marginBottom: 4,
-  },
-  feedTab: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    alignItems: "center",
-    gap: 4,
-  },
-  feedTabText: { fontSize: 14 },
-  feedTabBar: {
-    height: 2,
-    width: "80%",
-    borderRadius: 1,
-  },
-  section: { marginTop: 20 },
-  sectionHeader: {
+
+  /* Tabs */
+  tabs: {
     flexDirection: "row",
+    gap: 4,
+  },
+  tabItem: {
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+    marginRight: 16,
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    marginBottom: 14,
+    gap: 5,
   },
-  sectionTitle: { fontSize: 19, fontFamily: "Inter_700Bold" },
-  seeAll: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  postCount: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  collectionCard: {
-    width: 168,
-    borderRadius: 18,
-    overflow: "hidden",
+  tabLabel: { fontSize: 15 },
+  tabBar: {
+    height: 2.5,
+    width: "100%",
+    borderRadius: 2,
   },
-  collectionGradient: {
-    padding: 16,
-    gap: 10,
-    minHeight: 150,
-    justifyContent: "space-between",
-  },
-  collectionEmoji: { fontSize: 32 },
-  collectionInfo: { flex: 1 },
-  collectionTitle: {
-    fontSize: 14,
-    fontFamily: "Inter_700Bold",
-    color: "#fff",
-    lineHeight: 19,
-  },
-  collectionMeta: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.75)",
+
+  /* Grid */
+  grid: {
+    flexDirection: "row",
+    paddingHorizontal: H_PAD,
+    gap: GAP,
     marginTop: 4,
   },
-  collectionSaveBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.25)",
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "flex-end",
-  },
-  masonry: {
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    gap: 10,
-  },
-  masonryCol: {
+  col: {
     flex: 1,
-    gap: 10,
+    gap: GAP,
   },
-  masonryCard: {
-    borderRadius: 16,
+
+  /* Card */
+  card: {
+    borderRadius: 20,
     overflow: "hidden",
   },
-  cardImageWrap: {
+  cardImg: {
+    borderRadius: 20,
+    overflow: "hidden",
     position: "relative",
-    overflow: "hidden",
-    borderRadius: 14,
   },
-  cardImage: {
-    width: "100%",
-    height: "100%",
-  },
-  cardEmojiWrap: {
+  emojiWrap: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
   },
-  cardEmoji: { fontSize: 40 },
+  emoji: { fontSize: 44 },
+  fade: { borderRadius: 20 },
   bookmarkBtn: {
     position: "absolute",
-    top: 8,
-    right: 8,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    top: 10,
+    right: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(0,0,0,0.4)",
     alignItems: "center",
     justifyContent: "center",
   },
-  cardBody: {
-    padding: 10,
-    gap: 3,
+
+  /* Caption */
+  cardCaption: {
+    paddingTop: 8,
+    paddingHorizontal: 4,
+    paddingBottom: 4,
+    gap: 4,
   },
   cardTitle: {
     fontSize: 13,
     fontFamily: "Inter_600SemiBold",
     lineHeight: 18,
   },
-  cardLoc: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 15,
-  },
-  cardFooter: {
+  cardMeta: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 4,
   },
-  likeRow: {
+  cardLoc: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    flex: 1,
+  },
+  addBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 3,
-  },
-  likeCount: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  addTripBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    gap: 4,
+    borderWidth: 1,
     borderRadius: 8,
-    backgroundColor: "rgba(124,111,247,0.15)",
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    alignSelf: "flex-start",
+    marginTop: 2,
   },
-  addTripText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  emptyState: {
+  addBtnText: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
+  },
+
+  /* Empty */
+  empty: {
     alignItems: "center",
-    paddingVertical: 48,
-    gap: 8,
+    paddingVertical: 60,
+    gap: 10,
   },
-  emptyEmoji: { fontSize: 40 },
+  emptyEmoji: { fontSize: 44 },
   emptyText: { fontSize: 15, fontFamily: "Inter_400Regular" },
-  modalOverlay: {
+
+  /* Modal */
+  overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(0,0,0,0.65)",
     justifyContent: "flex-end",
   },
-  modalSheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+  sheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     padding: 24,
     paddingBottom: 40,
   },
-  modalHandle: {
-    width: 36,
+  handle: {
+    width: 40,
     height: 4,
     borderRadius: 2,
     alignSelf: "center",
-    marginBottom: 20,
+    marginBottom: 22,
   },
-  modalTitle: {
-    fontSize: 20,
+  sheetTitle: {
+    fontSize: 22,
     fontFamily: "Inter_700Bold",
     marginBottom: 4,
   },
-  modalSub: {
+  sheetSub: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
     marginBottom: 20,
@@ -868,20 +700,26 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     gap: 12,
   },
-  tripDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  tripAccent: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
-  tripRowTitle: {
+  tripName: {
     fontSize: 15,
     fontFamily: "Inter_600SemiBold",
   },
-  tripRowSub: {
+  tripDest: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
     marginTop: 1,
-    textTransform: "capitalize",
+  },
+  addCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
   },
   cancelBtn: {
     marginTop: 16,
@@ -890,5 +728,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
   },
-  cancelText: { fontSize: 15, fontFamily: "Inter_500Medium" },
+  cancelText: {
+    fontSize: 15,
+    fontFamily: "Inter_500Medium",
+  },
 });
