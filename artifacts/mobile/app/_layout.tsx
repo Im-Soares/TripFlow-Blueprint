@@ -6,32 +6,62 @@ import {
   useFonts,
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Redirect, Stack, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider } from "@/context/AppContext";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { authState } = useAuth();
+  const segments = useSegments();
+
+  const inAuthGroup = segments[0] === "auth";
+
+  if (authState.status === "loading") {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#0A0A14", alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator color="#7C6FF7" size="large" />
+      </View>
+    );
+  }
+
+  if (authState.status === "unauthenticated" && !inAuthGroup) {
+    return <Redirect href="/auth" />;
+  }
+
+  if (authState.status === "authenticated" && inAuthGroup) {
+    return <Redirect href="/(tabs)" />;
+  }
+
+  return <>{children}</>;
+}
+
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="create-trip"
-        options={{ presentation: "modal", headerShown: false }}
-      />
-      <Stack.Screen name="trip/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="achievements" options={{ headerShown: false }} />
-      <Stack.Screen name="explore/[id]" options={{ headerShown: false }} />
-    </Stack>
+    <AuthGate>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="create-trip"
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen name="trip/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="achievements" options={{ headerShown: false }} />
+        <Stack.Screen name="explore/[id]" options={{ headerShown: false }} />
+      </Stack>
+    </AuthGate>
   );
 }
 
@@ -55,13 +85,15 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
-          <AppProvider>
-            <GestureHandlerRootView>
-              <KeyboardProvider>
-                <RootLayoutNav />
-              </KeyboardProvider>
-            </GestureHandlerRootView>
-          </AppProvider>
+          <AuthProvider>
+            <AppProvider>
+              <GestureHandlerRootView>
+                <KeyboardProvider>
+                  <RootLayoutNav />
+                </KeyboardProvider>
+              </GestureHandlerRootView>
+            </AppProvider>
+          </AuthProvider>
         </QueryClientProvider>
       </ErrorBoundary>
     </SafeAreaProvider>

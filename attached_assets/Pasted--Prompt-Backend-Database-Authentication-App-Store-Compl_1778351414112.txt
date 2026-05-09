@@ -1,0 +1,736 @@
+# Prompt — Backend, Database, Authentication & App Store Compliance for TripFlow
+
+Quero transformar o TripFlow numa aplicação totalmente funcional, pronta para produção e preparada para publicação na Apple App Store.
+
+A aplicação já possui estrutura visual/frontend.
+
+O objetivo agora NÃO é recriar o projeto.
+
+O objetivo é:
+
+* ligar todo o frontend a um backend real
+* criar toda a base de dados necessária
+* implementar autenticação funcional
+* implementar persistência real de dados
+* implementar colaboração e partilha de viagens
+* garantir conformidade com os requisitos da Apple App Store
+* melhorar estabilidade, segurança e arquitetura
+
+A aplicação deve ficar production-ready.
+
+---
+
+# 1. STACK TÉCNICA (ESCOLHER A MELHOR OPÇÃO)
+
+Usar uma stack moderna, escalável, rápida e altamente compatível com aplicações SaaS modernas.
+
+## Recomendação principal
+
+Frontend:
+
+* Next.js
+* TypeScript
+* Tailwind CSS
+* Framer Motion
+* Zustand ou Redux Toolkit
+* React Query / TanStack Query
+
+Backend:
+
+* Next.js App Router + Server Actions + API Routes
+  OU
+* NestJS (se necessário maior separação enterprise)
+
+Base de dados:
+
+* PostgreSQL
+
+ORM:
+
+* Prisma ORM
+
+Autenticação:
+
+* Auth.js / NextAuth
+
+Storage:
+
+* S3 ou Cloudinary
+
+Realtime:
+
+* Socket.io ou Supabase Realtime
+
+Deploy:
+
+* Vercel
+* Railway / Supabase / Neon
+
+A arquitetura deve ser:
+
+* modular
+* escalável
+* segura
+* fácil de manter
+* preparada para mobile app futuro
+
+---
+
+# 2. IMPLEMENTAR BASE DE DADOS COMPLETA
+
+Criar toda a base de dados necessária com relações corretas.
+
+Tudo deve funcionar realmente.
+
+Nada pode ficar apenas visual.
+
+Implementar:
+
+* migrations
+* relations
+* indexes
+* validation
+* cascading rules
+* role permissions
+* secure access rules
+
+---
+
+# 3. ENTIDADES OBRIGATÓRIAS
+
+## Users
+
+Campos:
+
+* id
+* name
+* username
+* email
+* password_hash
+* avatar_url
+* banner_url
+* bio
+* preferred_currency
+* language
+* timezone
+* profile_visibility
+* created_at
+* updated_at
+
+---
+
+## User Settings
+
+Campos:
+
+* id
+* user_id
+* notification_trip_updates
+* notification_chat_messages
+* notification_booking_reminders
+* notification_checklist_reminders
+* allow_trip_invites
+* default_shared_role
+* enable_link_sharing_by_default
+* theme
+
+---
+
+## Trips
+
+Campos:
+
+* id
+* owner_id
+* title
+* destination
+* start_date
+* end_date
+* travelers_count
+* travel_type
+* estimated_budget
+* currency
+* cover_image_url
+* status
+* created_at
+* updated_at
+
+---
+
+## Trip Members
+
+Campos:
+
+* id
+* trip_id
+* user_id
+* role
+* joined_at
+* invited_by
+* invitation_status
+
+Roles:
+
+* owner
+* editor
+* viewer
+
+---
+
+## Trip Invitations
+
+Campos:
+
+* id
+* trip_id
+* invited_by_user_id
+* invited_email
+* invite_token
+* role
+* password_protected
+* access_password_hash
+* expires_at
+* status
+* created_at
+
+Implementar:
+
+* criação de convite
+* aceitar convite
+* revogar convite
+* validar permissões
+* validar expiração
+* proteção por password
+
+---
+
+## Trip Share Links
+
+Campos:
+
+* id
+* trip_id
+* created_by_user_id
+* share_token
+* role
+* is_active
+* requires_password
+* password_hash
+* created_at
+* expires_at
+
+Implementar:
+
+* gerar link
+* copiar link
+* desativar link
+* password protection
+* validação de acesso
+
+---
+
+## Itinerary Days
+
+Campos:
+
+* id
+* trip_id
+* date
+* title
+* position
+
+---
+
+## Itinerary Items
+
+Campos:
+
+* id
+* trip_day_id
+* title
+* location
+* time
+* duration
+* cost
+* notes
+* external_link
+* category
+* is_must_do
+* is_completed
+* position
+* created_by
+* created_at
+
+---
+
+## Expenses
+
+Campos:
+
+* id
+* trip_id
+* title
+* amount
+* category
+* status
+* paid_by_user_id
+* split_type
+* notes
+* expense_date
+* created_by
+* created_at
+
+---
+
+## Expense Splits
+
+Campos:
+
+* id
+* expense_id
+* user_id
+* amount
+
+---
+
+## Bookings
+
+Campos:
+
+* id
+* trip_id
+* type
+* title
+* provider
+* booking_reference
+* location
+* booking_date
+* price
+* status
+* notes
+* external_link
+* created_by
+* created_at
+
+---
+
+## Checklists
+
+Campos:
+
+* id
+* trip_id
+* title
+* created_by
+* created_at
+
+---
+
+## Checklist Items
+
+Campos:
+
+* id
+* checklist_id
+* title
+* is_completed
+* assigned_to_user_id
+* position
+
+---
+
+## Notes
+
+Campos:
+
+* id
+* trip_id
+* title
+* content
+* created_by
+* updated_at
+
+---
+
+## Chat Messages
+
+Campos:
+
+* id
+* trip_id
+* sender_user_id
+* message
+* message_type
+* created_at
+
+Implementar:
+
+* envio de mensagens
+* persistência
+* carregamento em tempo real
+* ordenação correta
+
+---
+
+## Travel Goals
+
+Campos:
+
+* id
+* user_id
+* title
+* goal_type
+* target_value
+* current_value
+* target_year
+* created_at
+* updated_at
+
+---
+
+## Achievements
+
+Campos:
+
+* id
+* code
+* title
+* description
+* icon
+* requirement_type
+* requirement_value
+
+---
+
+## User Achievements
+
+Campos:
+
+* id
+* user_id
+* achievement_id
+* unlocked_at
+* progress_value
+
+---
+
+# 4. IMPLEMENTAR AUTENTICAÇÃO REAL
+
+Criar sistema completo de autenticação.
+
+Implementar:
+
+* login
+* registo
+* logout
+* sessões persistentes
+* recuperação de password
+* proteção de rotas privadas
+* refresh de sessão
+
+Preparar providers:
+
+* Google
+* Apple
+
+Segurança obrigatória:
+
+* passwords hashed com bcrypt/argon2
+* CSRF protection
+* rate limiting
+* secure cookies
+* JWT/session validation
+
+---
+
+# 5. IMPLEMENTAR TODAS AS LIGAÇÕES FRONTEND → BACKEND
+
+Garantir que todas as ações persistem corretamente.
+
+Tudo deve carregar da base de dados real.
+
+Implementar:
+
+* loading states
+* optimistic updates
+* error handling
+* validation
+* API security
+* role validation
+
+Deve funcionar:
+
+* criar viagem
+* editar viagem
+* apagar viagem
+* criar atividade
+* criar despesa
+* criar booking
+* guardar notas
+* atualizar perfil
+* enviar mensagens
+* convidar utilizadores
+* aceitar convites
+* gerar links partilhados
+
+---
+
+# 6. UX — QUICK ACTIONS COM MODAIS
+
+As ações frequentes NÃO devem redirecionar utilizadores para páginas separadas.
+
+Usar modais/popup.
+
+Implementar:
+
+* Add Expense Modal
+* Add Activity Modal
+* Add Booking Modal
+
+Todos devem:
+
+* abrir com animação suave
+* usar dark mode premium
+* guardar inline
+* atualizar dados instantaneamente
+* manter contexto da página
+
+---
+
+# 7. MELHORAR LANDING PAGE
+
+Melhorar hero section.
+
+Adicionar:
+
+* imagem de avião
+* visual premium
+* headline forte
+* spacing elegante
+* UI minimalista
+
+Implementar animação subtil nos botões:
+
+* glow suave
+* light sweep
+* hover premium
+
+A landing page deve parecer:
+
+* moderna
+* premium
+* high-end
+* travel-focused
+
+---
+
+# 8. GOOGLE PLAY STORE COMPLIANCE (MUITO IMPORTANTE)
+
+A aplicação deve ser desenvolvida já preparada para aprovação na Google Play Store.
+
+Seguir rigorosamente as Google Play Developer Policies.
+
+Referências oficiais:
+
+* [https://play.google.com/about/developer-content-policy/](https://play.google.com/about/developer-content-policy/)
+* [https://support.google.com/googleplay/android-developer/](https://support.google.com/googleplay/android-developer/)
+* [https://developer.android.com/distribute/best-practices/launch/launch-checklist](https://developer.android.com/distribute/best-practices/launch/launch-checklist)
+
+Implementar e garantir:
+
+## Segurança
+
+* HTTPS obrigatório
+* armazenamento seguro
+* passwords hashed
+* proteção contra acesso indevido
+* validação de permissões
+* secure session handling
+* rate limiting
+
+---
+
+## Privacidade
+
+A aplicação deve incluir:
+
+* Privacy Policy
+* Terms of Service
+* consentimento de recolha de dados
+* gestão de conta
+* apagar conta permanentemente
+* gestão de sessões/dispositivos
+
+Garantir conformidade com:
+
+* GDPR
+* Google Play User Data Policies
+
+---
+
+## User Data & Permissions Compliance
+
+A aplicação deve pedir apenas permissões realmente necessárias.
+
+Evitar:
+
+* permissões desnecessárias
+* recolha excessiva de dados
+* tracking abusivo
+
+Caso sejam usados:
+
+* notificações
+* uploads de imagens
+* geolocalização futura
+
+Implementar pedidos de permissão claros e contextuais.
+
+---
+
+## User Generated Content Compliance
+
+Como existe:
+
+* chat
+* colaboração
+* notas partilhadas
+
+Implementar:
+
+* reporting system
+* block/report abuse structure
+* content moderation readiness
+* termos de utilização
+
+A Google Play exige proteção contra abuso em apps com conteúdo gerado por utilizadores.
+
+---
+
+## Performance & Stability
+
+Garantir:
+
+* app rápida
+* sem crashes
+* loading states
+* tratamento de erros
+* sem funcionalidades falsas
+* boa performance mobile
+
+---
+
+## Design & UX Requirements
+
+A app deve parecer:
+
+* polished
+* consistente
+* production-ready
+* responsiva
+* mobile-first
+
+Evitar:
+
+* layouts quebrados
+* componentes desalinhados
+* experiências confusas
+
+---
+
+## Account Deletion Requirement
+
+Implementar funcionalidade obrigatória:
+
+* apagar conta dentro da app
+* remover dados do utilizador
+
+A Google Play também exige isto para apps com criação de conta.
+
+---
+
+## Login Compliance
+
+Se existir login social:
+
+Implementar corretamente:
+
+* Google Sign-In
+* Apple Sign-In (opcional mas recomendado para futura expansão iOS)
+
+---
+
+## Ads Compliance
+
+Os anúncios devem:
+
+* ser discretos
+* não interromper fluxos críticos
+* nunca aparecer em chat
+* nunca aparecer em formulários sensíveis
+* respeitar Better Ads Experience
+
+Evitar:
+
+* popups agressivos
+* anúncios enganosos
+* autoplay intrusivo
+
+---
+
+## Accessibility
+
+Implementar:
+
+* contraste adequado
+* tamanhos touch-friendly
+* labels corretas
+* suporte mobile adequado
+* acessibilidade básica Android
+
+---
+
+## Data Safety Section
+
+Preparar a app para preencher corretamente a Google Play Data Safety Section.
+
+Documentar:
+
+* dados recolhidos
+* finalidade dos dados
+* partilha de dados
+* segurança aplicada
+
+---
+
+# 9. ESTRUTURA FINAL ESPERADA
+
+No final, a aplicação deve estar:
+
+* totalmente funcional
+* conectada a backend real
+* com base de dados completa
+* com autenticação segura
+* com sistema de colaboração funcional
+* com convites e partilha reais
+* pronta para escalar
+* preparada para mobile app
+* alinhada com requisitos Apple App Store
+* preparada para produção
+
+---
+
+# 10. OBJETIVO FINAL
+
+O TripFlow deve deixar de parecer um protótipo.
+
+Deve parecer:
+
+* um produto real
+* um SaaS premium
+* uma plataforma moderna de planeamento de viagens
+* pronta para crescer e ser publicada na App Store.
+
+O resultado final deve transmitir:
+
+> “Esta aplicação está pronta para utilizadores reais.”
