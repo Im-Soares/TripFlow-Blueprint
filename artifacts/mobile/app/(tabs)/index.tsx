@@ -32,7 +32,7 @@ export default function HomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { trips, achievements, currentUser } = useApp();
+  const { trips, achievements, currentUser, tripsLoading, refreshTrips } = useApp();
 
   const upcoming = trips.filter((t) => t.status === "upcoming" || t.status === "ongoing");
   const nextTrip = upcoming[0];

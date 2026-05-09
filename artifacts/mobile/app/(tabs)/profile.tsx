@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Platform,
   ScrollView,
@@ -13,21 +14,57 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 
-function SettingRow({ icon, label, onPress, danger }: { icon: string; label: string; onPress: () => void; danger?: boolean }) {
+function SettingRow({
+  icon,
+  label,
+  sublabel,
+  onPress,
+  danger,
+  loading,
+}: {
+  icon: string;
+  label: string;
+  sublabel?: string;
+  onPress: () => void;
+  danger?: boolean;
+  loading?: boolean;
+}) {
   const colors = useColors();
   return (
     <TouchableOpacity
       style={[styles.settingRow, { borderColor: colors.border }]}
       onPress={onPress}
       activeOpacity={0.7}
+      disabled={loading}
     >
-      <View style={[styles.settingIcon, { backgroundColor: danger ? colors.destructive + "22" : colors.secondary }]}>
-        <Feather name={icon as any} size={16} color={danger ? colors.destructive : colors.mutedForeground} />
+      <View
+        style={[
+          styles.settingIcon,
+          { backgroundColor: danger ? colors.destructive + "22" : colors.secondary },
+        ]}
+      >
+        <Feather
+          name={icon as any}
+          size={16}
+          color={danger ? colors.destructive : colors.mutedForeground}
+        />
       </View>
-      <Text style={[styles.settingLabel, { color: danger ? colors.destructive : colors.foreground }]}>{label}</Text>
-      <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.settingLabel, { color: danger ? colors.destructive : colors.foreground }]}>
+          {label}
+        </Text>
+        {sublabel ? (
+          <Text style={[styles.settingSubLabel, { color: colors.mutedForeground }]}>{sublabel}</Text>
+        ) : null}
+      </View>
+      {loading ? (
+        <ActivityIndicator size="small" color={colors.mutedForeground} />
+      ) : (
+        <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+      )}
     </TouchableOpacity>
   );
 }
@@ -37,11 +74,70 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { currentUser, trips, achievements } = useApp();
+  const { logout, deleteAccount } = useAuth();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
-  const countries = new Set(trips.map((t) => t.country)).size;
+  const [signingOut, setSigningOut] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const countries = new Set(trips.map((t) => t.country).filter(Boolean)).size;
   const completedTrips = trips.filter((t) => t.status === "completed").length;
   const unlockedAchievements = achievements.filter((a) => a.unlocked).length;
+
+  function handleSignOut() {
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: async () => {
+          setSigningOut(true);
+          try {
+            await logout();
+          } finally {
+            setSigningOut(false);
+          }
+        },
+      },
+    ]);
+  }
+
+  function handleDeleteAccount() {
+    Alert.alert(
+      "Delete Account",
+      "This will permanently delete your account and all your data. This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete Forever",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Are you absolutely sure?",
+              `Type your email to confirm: ${currentUser.email}`,
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Yes, delete my account",
+                  style: "destructive",
+                  onPress: async () => {
+                    setDeleting(true);
+                    try {
+                      await deleteAccount();
+                    } catch {
+                      Alert.alert("Error", "Failed to delete account. Please try again.");
+                    } finally {
+                      setDeleting(false);
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  }
 
   return (
     <ScrollView
@@ -92,17 +188,16 @@ export default function ProfileScreen() {
             <Text style={[styles.seeAll, { color: colors.primary }]}>See all</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.achRow}>
-          {achievements.filter((a) => a.unlocked).slice(0, 4).map((a) => (
-            <View
-              key={a.id}
-              style={[styles.achBadge, { backgroundColor: colors.teal + "22", borderColor: colors.teal + "44" }]}
-            >
-              <Feather name={a.icon as any} size={20} color={colors.teal} />
-              <Text style={[styles.achLabel, { color: colors.foreground }]} numberOfLines={1}>{a.title}</Text>
-            </View>
-          ))}
-        </View>
+        {achievements.filter((a) => a.unlocked).length > 0 ? (
+          <View style={styles.achRow}>
+            {achievements.filter((a) => a.unlocked).slice(0, 4).map((a) => (
+              <View key={a.id} style={[styles.achBadge, { backgroundColor: colors.teal + "22", borderColor: colors.teal + "44" }]}>
+                <Feather name={a.icon as any} size={20} color={colors.teal} />
+                <Text style={[styles.achLabel, { color: colors.foreground }]} numberOfLines={1}>{a.title}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
         <View style={[styles.achProgress, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Feather name="award" size={16} color={colors.amber} />
           <Text style={[styles.achProgressText, { color: colors.foreground }]}>
@@ -114,19 +209,41 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Settings */}
+      {/* Account Settings */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Account</Text>
         <View style={[styles.settingsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <SettingRow icon="user" label="Edit Profile" onPress={() => Alert.alert("Edit Profile", "Profile editing coming soon.")} />
           <SettingRow icon="bell" label="Notifications" onPress={() => Alert.alert("Notifications", "Notification settings coming soon.")} />
-          <SettingRow icon="shield" label="Privacy" onPress={() => Alert.alert("Privacy", "Privacy settings coming soon.")} />
+          <SettingRow icon="shield" label="Privacy Policy" sublabel="How we handle your data" onPress={() => Alert.alert("Privacy Policy", "TripFlow collects only the data needed to provide you with trip planning services. We do not sell your data. Contact: privacy@tripflow.app")} />
+          <SettingRow icon="file-text" label="Terms of Service" onPress={() => Alert.alert("Terms of Service", "By using TripFlow you agree to our terms. Contact: legal@tripflow.app")} />
           <SettingRow icon="help-circle" label="Help & Support" onPress={() => Alert.alert("Support", "Contact: support@tripflow.app")} />
-          <SettingRow icon="log-out" label="Sign Out" onPress={() => Alert.alert("Sign Out", "Are you sure?", [{ text: "Cancel" }, { text: "Sign Out", style: "destructive" }])} danger />
         </View>
       </View>
 
-      <Text style={[styles.version, { color: colors.mutedForeground }]}>TripFlow v1.0</Text>
+      {/* Danger zone */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Session</Text>
+        <View style={[styles.settingsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <SettingRow
+            icon="log-out"
+            label="Sign Out"
+            onPress={handleSignOut}
+            danger
+            loading={signingOut}
+          />
+          <SettingRow
+            icon="trash-2"
+            label="Delete Account"
+            sublabel="Permanently removes all your data"
+            onPress={handleDeleteAccount}
+            danger
+            loading={deleting}
+          />
+        </View>
+      </View>
+
+      <Text style={[styles.version, { color: colors.mutedForeground }]}>TripFlow v1.0 · GDPR Compliant</Text>
     </ScrollView>
   );
 }
@@ -148,7 +265,7 @@ const styles = StyleSheet.create({
   statDivider: { width: 1, marginVertical: 4 },
   section: { paddingHorizontal: 20, marginTop: 24 },
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  sectionTitle: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  sectionTitle: { fontSize: 18, fontFamily: "Inter_700Bold", marginBottom: 12 },
   seeAll: { fontSize: 14, fontFamily: "Inter_500Medium" },
   achRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
   achBadge: { alignItems: "center", gap: 4, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, borderWidth: 1, minWidth: 80 },
@@ -158,6 +275,7 @@ const styles = StyleSheet.create({
   settingsCard: { borderRadius: 18, borderWidth: 1, overflow: "hidden" },
   settingRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1 },
   settingIcon: { width: 32, height: 32, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-  settingLabel: { flex: 1, fontSize: 15, fontFamily: "Inter_500Medium" },
+  settingLabel: { fontSize: 15, fontFamily: "Inter_500Medium" },
+  settingSubLabel: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
   version: { textAlign: "center", fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 24, marginBottom: 8 },
 });

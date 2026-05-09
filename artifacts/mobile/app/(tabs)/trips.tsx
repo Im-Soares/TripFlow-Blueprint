@@ -2,7 +2,9 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -31,9 +33,10 @@ export default function TripsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { trips } = useApp();
+  const { trips, tripsLoading, refreshTrips } = useApp();
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [search, setSearch] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
@@ -43,9 +46,15 @@ export default function TripsScreen() {
       search === "" ||
       t.title.toLowerCase().includes(search.toLowerCase()) ||
       t.destination.toLowerCase().includes(search.toLowerCase()) ||
-      t.country.toLowerCase().includes(search.toLowerCase());
+      (t.country ?? "").toLowerCase().includes(search.toLowerCase());
     return matchesFilter && matchesSearch;
   });
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    await refreshTrips();
+    setRefreshing(false);
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -98,40 +107,55 @@ export default function TripsScreen() {
             onPress={() => setFilter(f.key)}
             activeOpacity={0.8}
           >
-            <Text
-              style={[
-                styles.filterText,
-                { color: filter === f.key ? "#fff" : colors.mutedForeground },
-              ]}
-            >
+            <Text style={[styles.filterText, { color: filter === f.key ? "#fff" : colors.mutedForeground }]}>
               {f.label}
             </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      {/* List */}
-      <ScrollView
-        contentContainerStyle={[
-          styles.list,
-          { paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 100 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        {filtered.length === 0 ? (
-          <EmptyState
-            icon="map"
-            title={search ? "No trips found" : "No trips yet"}
-            subtitle={search ? "Try a different search term" : "Create your first trip to get started"}
-            actionLabel={search ? undefined : "Create Trip"}
-            onAction={search ? undefined : () => router.push("/create-trip")}
-          />
-        ) : (
-          filtered.map((trip: Trip) => (
-            <TripCard key={trip.id} trip={trip} variant="large" />
-          ))
-        )}
-      </ScrollView>
+      {/* Loading skeleton */}
+      {tripsLoading && trips.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator color={colors.primary} size="large" />
+          <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>Loading your trips…</Text>
+        </View>
+      ) : (
+        /* List */
+        <ScrollView
+          contentContainerStyle={[
+            styles.list,
+            { paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 100 },
+          ]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
+        >
+          {filtered.length === 0 ? (
+            <EmptyState
+              icon="map"
+              title={search ? "No trips found" : "No trips yet"}
+              subtitle={
+                search
+                  ? "Try a different search term"
+                  : "Create your first trip and it will appear here"
+              }
+              actionLabel={search ? undefined : "Create Trip"}
+              onAction={search ? undefined : () => router.push("/create-trip")}
+            />
+          ) : (
+            filtered.map((trip: Trip) => (
+              <TripCard key={trip.id} trip={trip} variant="large" />
+            ))
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -173,4 +197,15 @@ const styles = StyleSheet.create({
   },
   filterText: { fontSize: 13, fontFamily: "Inter_500Medium" },
   list: { paddingHorizontal: 20, paddingTop: 4 },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+    paddingTop: 80,
+  },
+  loadingText: {
+    fontSize: 15,
+    fontFamily: "Inter_400Regular",
+  },
 });

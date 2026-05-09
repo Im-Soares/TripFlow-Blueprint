@@ -2,6 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -15,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { ApiError } from "@/lib/api";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "SGD"];
 const ACCENT_COLORS = ["#7C6FF7", "#FF6B6B", "#4ECDC4", "#FFB347", "#6C8EBF", "#E879A0"];
@@ -41,27 +44,36 @@ export default function CreateTripScreen() {
     status: "upcoming" as "planning" | "upcoming",
     notes: "",
   });
+  const [loading, setLoading] = useState(false);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
-  function submit() {
-    if (!form.title.trim() || !form.destination.trim()) return;
-    createTrip({
-      title: form.title.trim(),
-      destination: form.destination.trim(),
-      country: form.country.trim() || form.destination.trim(),
-      startDate: form.startDate || new Date().toISOString().slice(0, 10),
-      endDate: form.endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-      totalBudget: parseFloat(form.totalBudget) || 0,
-      currency: form.currency,
-      accentColor: form.accentColor,
-      status: form.status,
-      notes: form.notes.trim(),
-    });
-    router.back();
-  }
-
   const isValid = form.title.trim().length > 0 && form.destination.trim().length > 0;
+
+  async function submit() {
+    if (!isValid || loading) return;
+    setLoading(true);
+    try {
+      await createTrip({
+        title: form.title.trim(),
+        destination: form.destination.trim(),
+        country: form.country.trim() || form.destination.trim(),
+        startDate: form.startDate || new Date().toISOString().slice(0, 10),
+        endDate: form.endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+        totalBudget: parseFloat(form.totalBudget) || 0,
+        currency: form.currency,
+        accentColor: form.accentColor,
+        status: form.status,
+        notes: form.notes.trim(),
+      });
+      router.back();
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Failed to create trip. Please try again.";
+      Alert.alert("Error", msg);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <KeyboardAvoidingView
@@ -70,17 +82,21 @@ export default function CreateTripScreen() {
     >
       {/* Header */}
       <View style={[styles.header, { paddingTop: topInset + 16, backgroundColor: colors.background, borderColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn} disabled={loading}>
           <Feather name="x" size={22} color={colors.mutedForeground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>New Trip</Text>
         <TouchableOpacity
-          style={[styles.saveBtn, { backgroundColor: isValid ? colors.primary : colors.secondary }]}
+          style={[styles.saveBtn, { backgroundColor: isValid && !loading ? colors.primary : colors.secondary }]}
           onPress={submit}
-          disabled={!isValid}
+          disabled={!isValid || loading}
           activeOpacity={0.85}
         >
-          <Text style={[styles.saveBtnText, { color: isValid ? "#fff" : colors.mutedForeground }]}>Create</Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={[styles.saveBtnText, { color: isValid ? "#fff" : colors.mutedForeground }]}>Create</Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -242,7 +258,7 @@ const styles = StyleSheet.create({
   },
   closeBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
   headerTitle: { fontSize: 17, fontFamily: "Inter_700Bold" },
-  saveBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10 },
+  saveBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10, minWidth: 60, alignItems: "center", justifyContent: "center" },
   saveBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   form: { padding: 20, gap: 16 },
   section: { borderRadius: 18, borderWidth: 1, padding: 16, gap: 10 },
