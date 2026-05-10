@@ -1,9 +1,11 @@
 import { Feather } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -43,12 +45,32 @@ export default function CreateTripScreen() {
     accentColor: ACCENT_COLORS[0],
     status: "upcoming" as "planning" | "upcoming",
     notes: "",
+    bannerImage: null as string | null,
   });
   const [loading, setLoading] = useState(false);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
   const isValid = form.title.trim().length > 0 && form.destination.trim().length > 0;
+
+  async function pickImage() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission needed", "Please grant access to your photo library to select a banner image.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setForm((f) => ({ ...f, bannerImage: result.assets[0].uri }));
+    }
+  }
 
   async function submit() {
     if (!isValid || loading) return;
@@ -65,6 +87,7 @@ export default function CreateTripScreen() {
         accentColor: form.accentColor,
         status: form.status,
         notes: form.notes.trim(),
+        coverImageUrl: form.bannerImage,
       });
       router.back();
     } catch (err) {
@@ -105,6 +128,32 @@ export default function CreateTripScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Banner Image */}
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>Trip Banner</Text>
+          <TouchableOpacity style={[styles.bannerPicker, { borderColor: colors.border }]} onPress={pickImage} activeOpacity={0.85}>
+            {form.bannerImage ? (
+              <Image source={{ uri: form.bannerImage }} style={styles.bannerImage} />
+            ) : (
+              <View style={styles.bannerPlaceholder}>
+                <Feather name="camera" size={24} color={colors.mutedForeground} />
+                <Text style={[styles.bannerPlaceholderText, { color: colors.mutedForeground }]}>
+                  Add a banner image
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          {form.bannerImage && (
+            <TouchableOpacity
+              style={[styles.removeBannerBtn, { backgroundColor: colors.destructive }]}
+              onPress={() => setForm((f) => ({ ...f, bannerImage: null }))}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.removeBannerText}>Remove banner</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* Color picker */}
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>Trip Color</Text>
@@ -276,4 +325,10 @@ const styles = StyleSheet.create({
   statusRow: { flexDirection: "row", gap: 10 },
   statusChip: { flex: 1, alignItems: "center", paddingVertical: 10, borderRadius: 12 },
   notesInput: { borderRadius: 12, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular", minHeight: 80, textAlignVertical: "top" },
+  bannerPicker: { height: 120, borderWidth: 2, borderStyle: "dashed", borderRadius: 12, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  bannerImage: { width: "100%", height: "100%", resizeMode: "cover" },
+  bannerPlaceholder: { alignItems: "center", gap: 8 },
+  bannerPlaceholderText: { fontSize: 14, fontFamily: "Inter_500Medium" },
+  removeBannerBtn: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8, alignItems: "center", marginTop: 8 },
+  removeBannerText: { color: "#fff", fontSize: 13, fontFamily: "Inter_600SemiBold" },
 });

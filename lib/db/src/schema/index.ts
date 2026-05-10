@@ -8,3 +8,4 @@ export * from "./notes";
 export * from "./chat";
 export * from "./achievements";
 export * from "./goals";
+export * from "./posts";

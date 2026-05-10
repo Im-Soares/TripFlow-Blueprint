@@ -82,6 +82,7 @@ export default function ProfileScreen() {
 
   const countries = new Set(trips.map((t) => t.country).filter(Boolean)).size;
   const completedTrips = trips.filter((t) => t.status === "completed").length;
+  const planningTrips = trips.filter((t) => t.status === "planning").length;
   const unlockedAchievements = achievements.filter((a) => a.unlocked).length;
 
   function handleSignOut() {
@@ -170,13 +171,13 @@ export default function ProfileScreen() {
         </View>
         <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
         <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: colors.foreground }]}>{countries}</Text>
-          <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Countries</Text>
+          <Text style={[styles.statValue, { color: colors.foreground }]}>{completedTrips}</Text>
+          <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Completed</Text>
         </View>
         <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
         <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: colors.foreground }]}>{completedTrips}</Text>
-          <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Completed</Text>
+          <Text style={[styles.statValue, { color: colors.foreground }]}>{countries}</Text>
+          <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Countries</Text>
         </View>
       </View>
 
@@ -209,15 +210,53 @@ export default function ProfileScreen() {
         </View>
       </View>
 
+      {/* Quick Actions */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Quick Actions</Text>
+        <View style={[styles.quickActionsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity
+            style={[styles.quickAction, { borderColor: colors.border }]}
+            onPress={() => router.push("/create-trip")}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.quickActionIcon, { backgroundColor: colors.primary + "22" }]}>
+              <Feather name="plus" size={20} color={colors.primary} />
+            </View>
+            <Text style={[styles.quickActionLabel, { color: colors.foreground }]}>Create Trip</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.quickAction, { borderColor: colors.border }]}
+            onPress={() => router.push("/trips")}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.quickActionIcon, { backgroundColor: colors.teal + "22" }]}>
+              <Feather name="map" size={20} color={colors.teal} />
+            </View>
+            <Text style={[styles.quickActionLabel, { color: colors.foreground }]}>View Trips</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.quickAction, { borderColor: colors.border }]}
+            onPress={() => router.push("/explore")}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.quickActionIcon, { backgroundColor: colors.amber + "22" }]}>
+              <Feather name="compass" size={20} color={colors.amber} />
+            </View>
+            <Text style={[styles.quickActionLabel, { color: colors.foreground }]}>Explore</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {/* Account Settings */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Account</Text>
         <View style={[styles.settingsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <SettingRow icon="user" label="Edit Profile" onPress={() => Alert.alert("Edit Profile", "Profile editing coming soon.")} />
-          <SettingRow icon="bell" label="Notifications" onPress={() => Alert.alert("Notifications", "Notification settings coming soon.")} />
-          <SettingRow icon="shield" label="Privacy Policy" sublabel="How we handle your data" onPress={() => Alert.alert("Privacy Policy", "TripFlow collects only the data needed to provide you with trip planning services. We do not sell your data. Contact: privacy@tripflow.app")} />
-          <SettingRow icon="file-text" label="Terms of Service" onPress={() => Alert.alert("Terms of Service", "By using TripFlow you agree to our terms. Contact: legal@tripflow.app")} />
-          <SettingRow icon="help-circle" label="Help & Support" onPress={() => Alert.alert("Support", "Contact: support@tripflow.app")} />
+          <SettingRow icon="user" label="Edit Profile" onPress={() => router.push("/edit-profile")} />
+          <SettingRow icon="bell" label="Notifications" onPress={() => router.push("/notifications")} />
+          <SettingRow icon="shield" label="Privacy Policy" sublabel="How we handle your data" onPress={() => router.push("/privacy-policy")} />
+          <SettingRow icon="lock" label="Security" sublabel="Password and authentication" onPress={() => router.push("/security")} />
+          <SettingRow icon="file-text" label="Terms of Service" onPress={() => router.push("/terms-of-service")} />
+          <SettingRow icon="help-circle" label="Help & Support" onPress={() => router.push("/support")} />
         </View>
       </View>
 
@@ -278,4 +317,8 @@ const styles = StyleSheet.create({
   settingLabel: { fontSize: 15, fontFamily: "Inter_500Medium" },
   settingSubLabel: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
   version: { textAlign: "center", fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 24, marginBottom: 8 },
+  quickActionsCard: { borderRadius: 18, borderWidth: 1, padding: 16 },
+  quickAction: { alignItems: "center", gap: 8, padding: 16, borderRadius: 12, borderWidth: 1, flex: 1 },
+  quickActionIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  quickActionLabel: { fontSize: 13, fontFamily: "Inter_500Medium", textAlign: "center" },
 });

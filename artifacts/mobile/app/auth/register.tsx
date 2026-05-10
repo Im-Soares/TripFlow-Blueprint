@@ -43,6 +43,7 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       await register(name.trim(), email.trim().toLowerCase(), password);
+      router.replace("/trips");
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : "Registration failed. Please try again.";
       Alert.alert("Registration failed", msg);
@@ -74,7 +75,10 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <TouchableOpacity style={styles.back} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.back}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/auth'))}
+          >
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
 

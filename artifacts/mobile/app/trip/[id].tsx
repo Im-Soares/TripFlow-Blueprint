@@ -769,10 +769,10 @@ export default function TripDetailScreen() {
     );
   }
 
-  const cover = trip.localCover ? COVER_IMAGES[trip.localCover] : null;
+  const cover = trip.coverImageUrl ? { uri: trip.coverImageUrl } : trip.localCover ? COVER_IMAGES[trip.localCover] : null;
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}> 
       {/* Hero header */}
       <View style={styles.heroContainer}>
         {cover ? (
@@ -781,7 +781,7 @@ export default function TripDetailScreen() {
           <View style={[styles.heroBg, { backgroundColor: trip.accentColor + "44" }]} />
         )}
         <LinearGradient colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.75)"]} style={StyleSheet.absoluteFill} />
-        <View style={[styles.heroContent, { paddingTop: Platform.OS === "web" ? 67 + 8 : insets.top + 8 }]}>
+        <View style={[styles.heroContent, { paddingTop: Platform.OS === "web" ? 67 + 8 : insets.top + 8 }]}> 
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Feather name="arrow-left" size={20} color="#fff" />
           </TouchableOpacity>

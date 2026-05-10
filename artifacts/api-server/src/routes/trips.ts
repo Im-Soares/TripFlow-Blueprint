@@ -142,6 +142,7 @@ router.post("/trips", requireAuth, async (req, res) => {
     accentColor,
     notes,
     status,
+    coverImageUrl,
   } = req.body as Record<string, string | number>;
 
   if (!title || !destination || !startDate || !endDate) {
@@ -166,6 +167,7 @@ router.post("/trips", requireAuth, async (req, res) => {
         accentColor: accentColor ? String(accentColor) : "#7C6FF7",
         notes: notes ? String(notes) : "",
         status: (status as any) ?? "planning",
+        coverImageUrl: coverImageUrl ? String(coverImageUrl) : null,
         shareToken,
       })
       .returning();

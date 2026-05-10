@@ -40,6 +40,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login(email.trim().toLowerCase(), password);
+      router.replace("/trips");
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : "Login failed. Please try again.";
       Alert.alert("Login failed", msg);
@@ -62,7 +63,10 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <TouchableOpacity style={styles.back} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.back}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/auth'))}
+          >
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
 

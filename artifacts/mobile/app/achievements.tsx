@@ -18,7 +18,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   trips: "Trips",
   countries: "Countries",
   planning: "Planning",
-  social: "Social",
 };
 
 export default function AchievementsScreen() {
@@ -29,7 +28,7 @@ export default function AchievementsScreen() {
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
   const unlocked = achievements.filter((a) => a.unlocked).length;
-  const categories = ["trips", "countries", "planning", "social"] as const;
+  const categories = ["trips", "countries", "planning"] as const;
 
   function AchBadge({ a }: { a: Achievement }) {
     const pct = a.maxProgress > 0 ? a.progress / a.maxProgress : 0;

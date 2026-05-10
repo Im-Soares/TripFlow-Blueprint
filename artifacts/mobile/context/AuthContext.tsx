@@ -6,7 +6,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { api, clearToken, setToken, type UserPublic } from "@/lib/api";
+import { api, clearToken, setToken, ApiError, type UserPublic } from "@/lib/api";
 
 type AuthState =
   | { status: "loading" }
@@ -23,6 +23,41 @@ type AuthContextType = {
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
+const LOCAL_USER_KEY = "tf_local_user";
+
+function createLocalUser(name: string, email: string): UserPublic {
+  const cleanName = name.trim() || email.split("@")[0] || "TripFlow User";
+  const username = cleanName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "")
+    .slice(0, 24) || "traveler";
+
+  const now = new Date().toISOString();
+
+  return {
+    id: `local-${Date.now()}`,
+    name: cleanName,
+    username,
+    email,
+    avatarUrl: null,
+    bio: null,
+    preferredCurrency: "EUR",
+    language: "pt",
+    timezone: "Europe/Lisbon",
+    profileVisibility: "private",
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+async function saveLocalUser(user: UserPublic): Promise<void> {
+  await AsyncStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
+}
+
+async function getLocalUser(): Promise<UserPublic | null> {
+  const raw = await AsyncStorage.getItem(LOCAL_USER_KEY);
+  return raw ? (JSON.parse(raw) as UserPublic) : null;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authState, setAuthState] = useState<AuthState>({ status: "loading" });
@@ -32,23 +67,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const { user } = await api.auth.me();
         setAuthState({ status: "authenticated", user });
-      } catch {
-        setAuthState({ status: "unauthenticated" });
+      } catch (err) {
+        const localUser = await getLocalUser();
+        if (err instanceof ApiError && err.status === 0 && localUser) {
+          setAuthState({ status: "authenticated", user: localUser });
+        } else {
+          await clearToken();
+          setAuthState({ status: "unauthenticated" });
+        }
       }
     })();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const { token, user } = await api.auth.login({ email, password });
-    await setToken(token);
-    setAuthState({ status: "authenticated", user });
+    try {
+      const { token, user } = await api.auth.login({ email, password });
+      await setToken(token);
+      await saveLocalUser(user);
+      setAuthState({ status: "authenticated", user });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 0) {
+        const existingUser = await getLocalUser();
+        const user =
+          existingUser?.email.toLowerCase() === email.toLowerCase()
+            ? existingUser
+            : createLocalUser(email.split("@")[0], email);
+        await setToken("local-dev-token");
+        await saveLocalUser(user);
+        setAuthState({ status: "authenticated", user });
+        return;
+      }
+      throw err;
+    }
   }, []);
 
   const register = useCallback(
     async (name: string, email: string, password: string) => {
-      const { token, user } = await api.auth.register({ name, email, password });
-      await setToken(token);
-      setAuthState({ status: "authenticated", user });
+      try {
+        const { token, user } = await api.auth.register({ name, email, password });
+        await setToken(token);
+        await saveLocalUser(user);
+        setAuthState({ status: "authenticated", user });
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 0) {
+          const user = createLocalUser(name, email);
+          await setToken("local-dev-token");
+          await saveLocalUser(user);
+          setAuthState({ status: "authenticated", user });
+          return;
+        }
+        throw err;
+      }
     },
     []
   );
@@ -58,17 +127,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await api.auth.logout();
     } catch {}
     await clearToken();
+    await AsyncStorage.removeItem(LOCAL_USER_KEY);
     setAuthState({ status: "unauthenticated" });
   }, []);
 
   const updateUser = useCallback(async (data: Partial<UserPublic>) => {
-    const { user } = await api.auth.updateProfile(data);
-    setAuthState({ status: "authenticated", user });
+    try {
+      const { user } = await api.auth.updateProfile(data);
+      await saveLocalUser(user);
+      setAuthState({ status: "authenticated", user });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 0) {
+        const localUser = await getLocalUser();
+        if (!localUser) throw new Error("No local user found");
+        const user: UserPublic = { ...localUser, ...data, updatedAt: new Date().toISOString() };
+        await saveLocalUser(user);
+        setAuthState({ status: "authenticated", user });
+        return;
+      }
+      throw err;
+    }
   }, []);
 
   const deleteAccount = useCallback(async () => {
-    await api.auth.deleteAccount();
+    try {
+      await api.auth.deleteAccount();
+    } catch {}
     await clearToken();
+    await AsyncStorage.removeItem(LOCAL_USER_KEY);
     setAuthState({ status: "unauthenticated" });
   }, []);
 

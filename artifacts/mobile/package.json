@@ -4,7 +4,7 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "dev": "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_EXPO_DEV_DOMAIN EXPO_PUBLIC_DOMAIN=$REPLIT_DEV_DOMAIN EXPO_PUBLIC_REPL_ID=$REPL_ID REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN pnpm exec expo start --localhost --port $PORT",
+    "dev": "node -e \"const cp=require('child_process'); const env={...process.env, EXPO_PACKAGER_PROXY_URL: process.env.REPLIT_EXPO_DEV_DOMAIN ? 'https://' + process.env.REPLIT_EXPO_DEV_DOMAIN : '', EXPO_PUBLIC_DOMAIN: process.env.REPLIT_DEV_DOMAIN || '', EXPO_PUBLIC_REPL_ID: process.env.REPL_ID || '', REACT_NATIVE_PACKAGER_HOSTNAME: process.env.REPLIT_DEV_DOMAIN || 'localhost'}; cp.execSync('pnpm exec expo start --localhost --port ' + (process.env.PORT || 8081), { stdio: 'inherit', shell: true, env });\"",
     "build": "node scripts/build.js",
     "serve": "node server/serve.js",
     "typecheck": "tsc -p tsconfig.json --noEmit"

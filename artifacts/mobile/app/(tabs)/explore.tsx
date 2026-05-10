@@ -1,544 +1,797 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
-  Alert,
   Dimensions,
-  Image,
-  ImageSourcePropType,
-  Modal,
+  ImageBackground,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/context/AppContext";
-import { POSTS } from "@/constants/posts";
 import { useColors } from "@/hooks/useColors";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const GAP = 8;
 const H_PAD = 16;
-const COL_W = (SCREEN_WIDTH - H_PAD * 2 - GAP) / 2;
+const CARD_WIDTH = (SCREEN_WIDTH - H_PAD * 2 - 8) / 2;
 
-const COVER: Record<string, ImageSourcePropType> = {
-  santorini: require("@/assets/images/trip_santorini.png"),
-  tokyo: require("@/assets/images/trip_tokyo.png"),
-  bali: require("@/assets/images/trip_bali.png"),
+// Enhanced mock recommendations with real image URLs
+const TRENDING_DESTINATIONS = [
+  {
+    id: "d1",
+    name: "Paris",
+    country: "France",
+    image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=500&h=500&fit=crop",
+    subtitle: "City of Light",
+    price: "from €150/night",
+  },
+  {
+    id: "d2",
+    name: "Tokyo",
+    country: "Japan",
+    image: "https://images.unsplash.com/photo-1540959375944-7049f642e9f1?w=500&h=500&fit=crop",
+    subtitle: "Modern Wonder",
+    price: "from ¥8,000/night",
+  },
+  {
+    id: "d3",
+    name: "Santorini",
+    country: "Greece",
+    image: "https://images.unsplash.com/photo-1613395877344-13d4a8e0d049?w=500&h=500&fit=crop",
+    subtitle: "Aegean Paradise",
+    price: "from €200/night",
+  },
+  {
+    id: "d4",
+    name: "Bali",
+    country: "Indonesia",
+    image: "https://images.unsplash.com/photo-1537225228614-b4fad34a0b60?w=500&h=500&fit=crop",
+    subtitle: "Tropical Escape",
+    price: "from $50/night",
+  },
+];
+
+// Enhanced mock recommendations with real image URLs
+const RECOMMENDATIONS = {
+  hotels: [
+    {
+      id: "h1",
+      name: "Hotel Indigo Paris",
+      location: "Paris, France",
+      rating: 4.5,
+      price: "€180/night",
+      image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=300&fit=crop",
+      description: "Boutique luxury in Le Marais",
+    },
+    {
+      id: "h2",
+      name: "The Ritz Tokyo",
+      location: "Tokyo, Japan",
+      rating: 4.8,
+      price: "¥45,000/night",
+      image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=300&fit=crop",
+      description: "Ultra-luxury experience in Shibuya",
+    },
+    {
+      id: "h3",
+      name: "Santorini Bliss Resort",
+      location: "Santorini, Greece",
+      rating: 4.7,
+      price: "€250/night",
+      image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=300&fit=crop",
+      description: "Cliffside views of the Aegean",
+    },
+  ],
+  activities: [
+    {
+      id: "a1",
+      name: "Eiffel Tower Guided Tour",
+      location: "Paris, France",
+      rating: 4.6,
+      price: "€65/person",
+      image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop",
+      description: "Skip-the-line with expert guide",
+    },
+    {
+      id: "a2",
+      name: "Tokyo Food Walking Tour",
+      location: "Tokyo, Japan",
+      rating: 4.9,
+      price: "¥8,500/person",
+      image: "https://images.unsplash.com/photo-1540959375944-7049f642e9f1?w=400&h=300&fit=crop",
+      description: "Authentic street food experiences",
+    },
+    {
+      id: "a3",
+      name: "Santorini Sunset Cruise",
+      location: "Santorini, Greece",
+      rating: 4.8,
+      price: "€85/person",
+      image: "https://images.unsplash.com/photo-1613395877344-13d4a8e0d049?w=400&h=300&fit=crop",
+      description: "Private yacht with champagne",
+    },
+  ],
+  restaurants: [
+    {
+      id: "r1",
+      name: "Le Jules Verne",
+      location: "Paris, France",
+      rating: 4.4,
+      price: "€€€",
+      image: "https://images.unsplash.com/photo-1504674900152-b8b9268170d1?w=400&h=300&fit=crop",
+      description: "Michelin-starred on the Eiffel Tower",
+    },
+    {
+      id: "r2",
+      name: "Niku Kappo",
+      location: "Tokyo, Japan",
+      rating: 4.7,
+      price: "¥¥¥¥",
+      image: "https://images.unsplash.com/photo-1504674900152-b8b9268170d1?w=400&h=300&fit=crop",
+      description: "Premium wagyu in Ginza",
+    },
+    {
+      id: "r3",
+      name: "Blue Note",
+      location: "Santorini, Greece",
+      rating: 4.5,
+      price: "€€€",
+      image: "https://images.unsplash.com/photo-1504674900152-b8b9268170d1?w=400&h=300&fit=crop",
+      description: "Mediterranean fine dining",
+    },
+  ],
 };
 
-const TABS = [
-  { id: "all", label: "All" },
-  { id: "foryou", label: "For You" },
-  { id: "trending", label: "Trending" },
-] as const;
 
-type TabId = (typeof TABS)[number]["id"];
 
 export default function ExploreScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { trips } = useApp();
   const router = useRouter();
-
-  const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<TabId>("all");
-  const [saved, setSaved] = useState<Set<string>>(new Set());
-  const [saveModalPost, setSaveModalPost] = useState<string | null>(null);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 100;
 
-  const visible = POSTS.filter((p) => {
-    if (tab !== "all" && p.tag !== tab) return false;
-    if (
-      query &&
-      !p.title.toLowerCase().includes(query.toLowerCase()) &&
-      !p.location.toLowerCase().includes(query.toLowerCase())
-    )
-      return false;
-    return true;
-  });
+  // Get upcoming/planning trips for personalized recommendations
+  const upcomingTrips = useMemo(() => {
+    return trips.filter(trip =>
+      trip.status === "planning" ||
+      trip.status === "upcoming"
+    );
+  }, [trips]);
 
-  const left = visible.filter((_, i) => i % 2 === 0);
-  const right = visible.filter((_, i) => i % 2 === 1);
+  // Get recommendations based on upcoming trips
+  const personalizedRecommendations = useMemo(() => {
+    if (upcomingTrips.length === 0) return null;
 
-  function openPost(postId: string) {
-    router.push(`/explore/${postId}?tab=${tab}` as any);
-  }
+    const trip = upcomingTrips[0];
+    const destination = trip.destination.toLowerCase();
 
-  function confirmSave(tripId: string) {
-    if (!saveModalPost) return;
-    const pid = saveModalPost;
-    setSaved((prev) => new Set(prev).add(pid));
-    setSaveModalPost(null);
-    const trip = trips.find((t) => t.id === tripId);
-    if (trip) Alert.alert("Saved! ✈️", `Added to "${trip.title}"`);
-  }
+    let hotels: any[] = [];
+    let activities: any[] = [];
+    let restaurants: any[] = [];
 
-  function Card({ post }: { post: (typeof POSTS)[number] }) {
-    const isSaved = saved.has(post.id);
+    if (destination.includes("paris") || destination.includes("france")) {
+      hotels = RECOMMENDATIONS.hotels.filter(h => h.location.includes("Paris"));
+      activities = RECOMMENDATIONS.activities.filter(a => a.location.includes("Paris"));
+      restaurants = RECOMMENDATIONS.restaurants.filter(r => r.location.includes("Paris"));
+    } else if (destination.includes("tokyo") || destination.includes("japan")) {
+      hotels = RECOMMENDATIONS.hotels.filter(h => h.location.includes("Tokyo"));
+      activities = RECOMMENDATIONS.activities.filter(a => a.location.includes("Tokyo"));
+      restaurants = RECOMMENDATIONS.restaurants.filter(r => r.location.includes("Tokyo"));
+    } else if (destination.includes("santorini") || destination.includes("greece")) {
+      hotels = RECOMMENDATIONS.hotels.filter(h => h.location.includes("Santorini"));
+      activities = RECOMMENDATIONS.activities.filter(a => a.location.includes("Santorini"));
+      restaurants = RECOMMENDATIONS.restaurants.filter(r => r.location.includes("Santorini"));
+    } else {
+      hotels = RECOMMENDATIONS.hotels.slice(0, 2);
+      activities = RECOMMENDATIONS.activities.slice(0, 2);
+      restaurants = RECOMMENDATIONS.restaurants.slice(0, 2);
+    }
 
+    return { hotels, activities, restaurants, trip };
+  }, [upcomingTrips]);
+
+  function TrendingDestinationCard({ item }: { item: any }) {
     return (
       <TouchableOpacity
-        style={[styles.card, { width: COL_W }]}
-        activeOpacity={0.92}
-        onPress={() => openPost(post.id)}
+        style={[styles.trendingCard, { marginHorizontal: H_PAD === 16 ? 8 : 12 }]}
+        activeOpacity={0.9}
       >
-        <View style={[styles.cardImg, { height: post.imgH }]}>
-          {post.cover ? (
-            <Image
-              source={COVER[post.cover]}
-              style={StyleSheet.absoluteFill}
-              resizeMode="cover"
-            />
-          ) : (
-            <LinearGradient
-              colors={(post.grad ?? ["#7C6FF7", "#3B2FB5"]) as [string, string]}
-              style={StyleSheet.absoluteFill}
-            />
-          )}
-          {!post.cover && post.emoji && (
-            <View style={styles.emojiWrap}>
-              <Text style={styles.emoji}>{post.emoji}</Text>
-            </View>
-          )}
+        <ImageBackground
+          source={{ uri: item.image }}
+          style={styles.trendingImage}
+          imageStyle={styles.trendingImageStyle}
+        >
           <LinearGradient
-            colors={["transparent", "rgba(0,0,0,0.42)"]}
-            style={[StyleSheet.absoluteFill, styles.fade]}
+            colors={["transparent", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.9)"]}
+            style={styles.trendingGradient}
           />
-          <TouchableOpacity
-            style={[
-              styles.bookmarkBtn,
-              isSaved && { backgroundColor: colors.primary },
-            ]}
-            onPress={(e) => {
-              e.stopPropagation();
-              isSaved ? null : setSaveModalPost(post.id);
-            }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Feather name="bookmark" size={12} color="#fff" />
-          </TouchableOpacity>
-        </View>
+          <View style={styles.trendingContent}>
+            <Text style={styles.trendingSubtitle}>{item.subtitle}</Text>
+            <Text style={styles.trendingName}>{item.name}</Text>
+            <Text style={styles.trendingCountry}>{item.country}</Text>
+            <Text style={styles.trendingPrice}>{item.price}</Text>
+            <TouchableOpacity
+              style={[styles.trendingCta, { backgroundColor: colors.primary }]}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.trendingCtaText}>Explore</Text>
+              <Feather name="arrow-right" size={14} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </ImageBackground>
+      </TouchableOpacity>
+    );
+  }
 
-        <View style={styles.cardCaption}>
+  function ImprovedRecommendationCard({ item, type }: { item: any; type: string }) {
+    return (
+      <TouchableOpacity
+        style={[
+          styles.improvedCard,
+          { 
+            width: CARD_WIDTH,
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+          },
+        ]}
+        activeOpacity={0.9}
+        onPress={() => setHoveredCard(item.id)}
+        onBlur={() => setHoveredCard(null)}
+      >
+        <ImageBackground
+          source={{ uri: item.image }}
+          style={styles.cardImageBg}
+          imageStyle={styles.cardImageStyle}
+        >
+          <LinearGradient
+            colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.6)"]}
+            style={styles.cardGradient}
+          />
+          <View style={styles.cardRatingBadge}>
+            <Feather name="star" size={12} color="#FFD700" />
+            <Text style={styles.cardRatingValue}>{item.rating}</Text>
+          </View>
+        </ImageBackground>
+
+        <View style={styles.improvedCardContent}>
+          <Text style={[styles.improvedCardTitle, { color: colors.foreground }]} numberOfLines={2}>
+            {item.name}
+          </Text>
+          <View style={styles.cardMetaRow}>
+            <Feather name="map-pin" size={12} color={colors.mutedForeground} />
+            <Text style={[styles.improvedCardLocation, { color: colors.mutedForeground }]}>
+              {item.location}
+            </Text>
+          </View>
           <Text
-            style={[styles.cardTitle, { color: colors.foreground }]}
+            style={[styles.improvedCardDescription, { color: colors.mutedForeground }]}
             numberOfLines={2}
           >
-            {post.title}
+            {item.description}
           </Text>
-          <Text
-            style={[styles.cardLoc, { color: colors.mutedForeground }]}
-            numberOfLines={1}
-          >
-            📍 {post.location}
-          </Text>
-          <TouchableOpacity
-            style={[styles.addBtn, { borderColor: colors.border }]}
-            onPress={(e) => {
-              e.stopPropagation();
-              setSaveModalPost(post.id);
-            }}
-          >
-            <Feather name="plus" size={11} color={colors.primary} />
-            <Text style={[styles.addBtnText, { color: colors.primary }]}>
-              Add to trip
+          <View style={styles.cardFooter}>
+            <Text style={[styles.improvedCardPrice, { color: colors.primary }]}>
+              {item.price}
             </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.improvedCardBtn, { backgroundColor: colors.primary }]}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.improvedCardBtnText}>Add</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </TouchableOpacity>
     );
   }
 
-  return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: botPad }}
-      >
-        {/* Header */}
-        <View style={[styles.header, { paddingTop: topPad + 14 }]}>
-          <View style={styles.headerRow}>
-            <View>
-              <Text style={[styles.title, { color: colors.foreground }]}>
-                Explore
-              </Text>
-              <Text
-                style={[styles.tagline, { color: colors.mutedForeground }]}
-              >
-                Find your next adventure
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={[
-                styles.iconBtn,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Feather name="map" size={18} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
+  function Section({ title, items, type }: { title: string; items: any[]; type: string }) {
+    if (items.length === 0) return null;
 
-          {/* Search */}
-          <View
-            style={[
-              styles.search,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Feather name="search" size={16} color={colors.mutedForeground} />
-            <TextInput
-              style={[styles.searchInput, { color: colors.foreground }]}
-              placeholder="Search destinations, restaurants, cafés…"
-              placeholderTextColor={colors.mutedForeground}
-              value={query}
-              onChangeText={setQuery}
-              returnKeyType="search"
-            />
-            {query.length > 0 && (
-              <TouchableOpacity onPress={() => setQuery("")}>
-                <Feather name="x" size={14} color={colors.mutedForeground} />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Tabs */}
-          <View style={styles.tabs}>
-            {TABS.map((t) => {
-              const active = tab === t.id;
-              return (
-                <TouchableOpacity
-                  key={t.id}
-                  style={styles.tabItem}
-                  onPress={() => setTab(t.id)}
-                >
-                  <Text
-                    style={[
-                      styles.tabLabel,
-                      {
-                        color: active
-                          ? colors.foreground
-                          : colors.mutedForeground,
-                        fontFamily: active
-                          ? "Inter_700Bold"
-                          : "Inter_400Regular",
-                      },
-                    ]}
-                  >
-                    {t.label}
-                  </Text>
-                  {active && (
-                    <LinearGradient
-                      colors={["#7C6FF7", "#C44BFF"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.tabBar}
-                    />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{title}</Text>
+          <TouchableOpacity>
+            <Text style={[styles.seeAllBtn, { color: colors.primary }]}>See all</Text>
+          </TouchableOpacity>
         </View>
+        <View style={styles.grid}>
+          {items.map((item) => (
+            <ImprovedRecommendationCard key={item.id} item={item} type={type} />
+          ))}
+        </View>
+      </View>
+    );
+  }
 
-        {/* Masonry grid */}
-        {visible.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>🔍</Text>
-            <Text
-              style={[styles.emptyText, { color: colors.mutedForeground }]}
-            >
-              No results for "{query}"
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.grid}>
-            <View style={styles.col}>
-              {left.map((p) => (
-                <Card key={p.id} post={p} />
-              ))}
-            </View>
-            <View style={styles.col}>
-              {right.map((p) => (
-                <Card key={p.id} post={p} />
-              ))}
-            </View>
-          </View>
-        )}
-      </ScrollView>
-
-      {/* Save to Trip modal */}
-      <Modal
-        visible={saveModalPost !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setSaveModalPost(null)}
+  return (
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={{ paddingBottom: botPad }}
+      showsVerticalScrollIndicator={false}
+      scrollEventThrottle={16}
+    >
+      {/* HERO DISCOVERY SECTION */}
+      <ImageBackground
+        source={{
+          uri: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&h=400&fit=crop",
+        }}
+        style={[styles.heroSection, { paddingTop: topPad + 20 }]}
+        imageStyle={styles.heroImageStyle}
       >
-        <Pressable
-          style={styles.overlay}
-          onPress={() => setSaveModalPost(null)}
-        >
-          <Pressable
-            style={[styles.sheet, { backgroundColor: colors.card }]}
-            onPress={(e) => e.stopPropagation()}
+        <LinearGradient
+          colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.85)"]}
+          style={styles.heroGradient}
+        />
+        <View style={styles.heroContent}>
+          <Text style={styles.heroSubtitle}>DISCOVER</Text>
+          <Text style={styles.heroTitle}>Where will your{"\n"}next journey{"\n"}take you?</Text>
+          <Text style={styles.heroDescription}>
+            Explore curated destinations, local experiences, and hidden gems around the world
+          </Text>
+          <TouchableOpacity
+            style={[styles.heroSearchBtn, { backgroundColor: colors.primary }]}
+            activeOpacity={0.85}
           >
-            <View
-              style={[styles.handle, { backgroundColor: colors.border }]}
+            <Feather name="search" size={16} color="#fff" />
+            <Text style={styles.heroSearchText}>Search destinations</Text>
+          </TouchableOpacity>
+        </View>
+      </ImageBackground>
+
+      {/* TRENDING DESTINATIONS */}
+      <View style={styles.trendingSection}>
+        <View style={[styles.sectionHeader, { paddingHorizontal: H_PAD }]}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Trending Now</Text>
+          <TouchableOpacity>
+            <Text style={[styles.seeAllBtn, { color: colors.primary }]}>View all</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.trendingScroll}
+          scrollEventThrottle={16}
+        >
+          {TRENDING_DESTINATIONS.map((dest) => (
+            <TrendingDestinationCard key={dest.id} item={dest} />
+          ))}
+        </ScrollView>
+      </View>
+
+      {personalizedRecommendations ? (
+        <>
+          {/* PERSONALIZED BANNER */}
+          <ImageBackground
+            source={{
+              uri: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=300&fit=crop",
+            }}
+            style={[styles.personalizedBanner, { marginHorizontal: H_PAD, marginVertical: 24 }]}
+            imageStyle={styles.personalizedImageStyle}
+          >
+            <LinearGradient
+              colors={["rgba(0,0,0,0.4)", "rgba(0,0,0,0.7)"]}
+              style={styles.personalizedGradient}
             />
-            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
-              Add to Trip
-            </Text>
-            <Text
-              style={[styles.sheetSub, { color: colors.mutedForeground }]}
-            >
-              Which trip should this spot go to?
-            </Text>
-            <ScrollView
-              style={{ maxHeight: 300 }}
-              showsVerticalScrollIndicator={false}
-            >
-              {trips.map((trip) => (
-                <TouchableOpacity
-                  key={trip.id}
-                  style={[
-                    styles.tripRow,
-                    { borderBottomColor: colors.border },
-                  ]}
-                  onPress={() => confirmSave(trip.id)}
-                  activeOpacity={0.8}
-                >
-                  <View
-                    style={[
-                      styles.tripDot,
-                      { backgroundColor: trip.accentColor },
-                    ]}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={[styles.tripName, { color: colors.foreground }]}
-                    >
-                      {trip.title}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.tripDest,
-                        { color: colors.mutedForeground },
-                      ]}
-                    >
-                      {trip.destination}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.addCircle,
-                      { backgroundColor: colors.primary + "22" },
-                    ]}
-                  >
-                    <Feather name="plus" size={16} color={colors.primary} />
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <TouchableOpacity
-              style={[styles.cancelBtn, { borderColor: colors.border }]}
-              onPress={() => setSaveModalPost(null)}
-            >
-              <Text
-                style={[
-                  styles.cancelText,
-                  { color: colors.mutedForeground },
-                ]}
-              >
-                Cancel
+            <View style={styles.personalizedBannerContent}>
+              <Text style={styles.personalizedBannerTag}>CURATED FOR YOU</Text>
+              <Text style={styles.personalizedBannerTitle}>
+                Your trip to {personalizedRecommendations.trip.destination}
               </Text>
-            </TouchableOpacity>
-          </Pressable>
-        </Pressable>
-      </Modal>
-    </View>
+              <Text style={styles.personalizedBannerSubtitle}>
+                Handpicked hotels, activities & restaurants
+              </Text>
+            </View>
+          </ImageBackground>
+
+          {/* RECOMMENDATIONS SECTIONS */}
+          <Section
+            title="Top Hotels"
+            items={personalizedRecommendations.hotels}
+            type="hotels"
+          />
+          <Section
+            title="Must-Do Activities"
+            items={personalizedRecommendations.activities}
+            type="activities"
+          />
+          <Section
+            title="Best Restaurants"
+            items={personalizedRecommendations.restaurants}
+            type="restaurants"
+          />
+        </>
+      ) : (
+        /* NO TRIPS STATE */
+        <View style={styles.noTrips}>
+          <LinearGradient
+            colors={[colors.primary + "20", colors.primary + "10"]}
+            style={styles.noTripsGradient}
+          />
+          <View style={styles.noTripsIcon}>
+            <Feather name="compass" size={56} color={colors.primary} />
+          </View>
+          <Text style={[styles.noTripsTitle, { color: colors.foreground }]}>
+            Plan Your Next Adventure
+          </Text>
+          <Text style={[styles.noTripsSubtitle, { color: colors.mutedForeground }]}>
+            Create a trip to get personalized destination recommendations and local insights
+          </Text>
+          <TouchableOpacity
+            style={[styles.ctaBtn, { backgroundColor: colors.primary }]}
+            onPress={() => router.push("/create-trip")}
+            activeOpacity={0.85}
+          >
+            <Feather name="plus" size={16} color="#fff" />
+            <Text style={styles.ctaBtnText}>Create Your First Trip</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  header: { paddingHorizontal: H_PAD, paddingBottom: 12 },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: -0.5,
-  },
-  tagline: {
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    marginTop: 2,
-  },
-  iconBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  search: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    gap: 10,
-    marginBottom: 16,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-  },
-  tabs: { flexDirection: "row", gap: 4 },
-  tabItem: {
-    paddingHorizontal: 4,
-    paddingVertical: 8,
-    marginRight: 16,
-    alignItems: "center",
-    gap: 5,
-  },
-  tabLabel: { fontSize: 15 },
-  tabBar: { height: 2.5, width: "100%", borderRadius: 2 },
-  grid: {
-    flexDirection: "row",
+  container: { flex: 1 },
+
+  // HERO SECTION
+  heroSection: {
+    height: Platform.OS === "web" ? 420 : 360,
+    justifyContent: "flex-end",
     paddingHorizontal: H_PAD,
-    gap: GAP,
-    marginTop: 4,
+    paddingBottom: 40,
+    overflow: "hidden",
   },
-  col: { flex: 1, gap: GAP },
-  card: { borderRadius: 20, overflow: "hidden" },
-  cardImg: {
+  heroImageStyle: {
+    resizeMode: "cover",
+  },
+  heroGradient: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  heroContent: {
+    gap: 16,
+    zIndex: 2,
+  },
+  heroSubtitle: {
+    fontSize: 12,
+    fontFamily: "Inter_700Bold",
+    color: "#fff",
+    letterSpacing: 1.2,
+  },
+  heroTitle: {
+    fontSize: Platform.OS === "web" ? 48 : 40,
+    fontFamily: "Inter_700Bold",
+    color: "#fff",
+    lineHeight: Platform.OS === "web" ? 56 : 48,
+  },
+  heroDescription: {
+    fontSize: 16,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.9)",
+    lineHeight: 24,
+  },
+  heroSearchBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignSelf: "flex-start",
+    marginTop: 8,
+  },
+  heroSearchText: {
+    color: "#fff",
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+  },
+
+  // TRENDING SECTION
+  trendingSection: {
+    marginBottom: 32,
+    marginTop: 28,
+  },
+  trendingScroll: {
+    paddingHorizontal: 0,
+    gap: 0,
+  },
+  trendingCard: {
+    width: Platform.OS === "web" ? 280 : 240,
+    height: Platform.OS === "web" ? 340 : 300,
     borderRadius: 20,
     overflow: "hidden",
-    position: "relative",
+    backgroundColor: "#1a1a1a",
   },
-  emojiWrap: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
+  trendingImage: {
+    flex: 1,
+    justifyContent: "flex-end",
+    paddingBottom: 24,
+    paddingHorizontal: 16,
   },
-  emoji: { fontSize: 44 },
-  fade: { borderRadius: 20 },
-  bookmarkBtn: {
+  trendingImageStyle: {
+    resizeMode: "cover",
+  },
+  trendingGradient: {
     position: "absolute",
-    top: 10,
-    right: 10,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    alignItems: "center",
-    justifyContent: "center",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
-  cardCaption: {
-    paddingTop: 8,
-    paddingHorizontal: 4,
-    paddingBottom: 4,
-    gap: 4,
+  trendingContent: {
+    zIndex: 2,
+    gap: 10,
   },
-  cardTitle: {
+  trendingSubtitle: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: "rgba(255,255,255,0.8)",
+    letterSpacing: 0.5,
+  },
+  trendingName: {
+    fontSize: 28,
+    fontFamily: "Inter_700Bold",
+    color: "#fff",
+  },
+  trendingCountry: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.85)",
+  },
+  trendingPrice: {
     fontSize: 13,
     fontFamily: "Inter_600SemiBold",
-    lineHeight: 18,
+    color: "rgba(255,255,255,0.9)",
+    marginTop: 4,
   },
-  cardLoc: {
+  trendingCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignSelf: "flex-start",
+    marginTop: 4,
+  },
+  trendingCtaText: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+  },
+
+  // PERSONALIZED BANNER
+  personalizedBanner: {
+    height: 200,
+    borderRadius: 20,
+    overflow: "hidden",
+    justifyContent: "flex-end",
+    paddingBottom: 24,
+    paddingHorizontal: 20,
+  },
+  personalizedImageStyle: {
+    resizeMode: "cover",
+  },
+  personalizedGradient: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  personalizedBannerContent: {
+    zIndex: 2,
+    gap: 8,
+  },
+  personalizedBannerTag: {
     fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    flex: 1,
+    fontFamily: "Inter_700Bold",
+    color: "rgba(255,255,255,0.8)",
+    letterSpacing: 1,
   },
-  addBtn: {
+  personalizedBannerTitle: {
+    fontSize: 24,
+    fontFamily: "Inter_700Bold",
+    color: "#fff",
+    lineHeight: 32,
+  },
+  personalizedBannerSubtitle: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.85)",
+  },
+
+  // SECTIONS
+  section: {
+    paddingHorizontal: H_PAD,
+    marginBottom: 36,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+  },
+  seeAllBtn: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+  },
+
+  // GRID
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    justifyContent: "space-between",
+  },
+
+  // IMPROVED RECOMMENDATION CARD
+  improvedCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: "hidden",
+    height: Platform.OS === "web" ? 360 : 320,
+  },
+  cardImageBg: {
+    height: 160,
+    justifyContent: "flex-end",
+    paddingBottom: 10,
+    paddingHorizontal: 10,
+  },
+  cardImageStyle: {
+    resizeMode: "cover",
+  },
+  cardGradient: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  cardRatingBadge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    borderWidth: 1,
-    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.6)",
     paddingHorizontal: 8,
-    paddingVertical: 5,
-    alignSelf: "flex-start",
-    marginTop: 2,
+    paddingVertical: 6,
+    borderRadius: 10,
+    zIndex: 3,
+    backdropFilter: "blur(10px)",
   },
-  addBtnText: { fontSize: 11, fontFamily: "Inter_500Medium" },
-  empty: { alignItems: "center", paddingVertical: 60, gap: 10 },
-  emptyEmoji: { fontSize: 44 },
-  emptyText: { fontSize: 15, fontFamily: "Inter_400Regular" },
-  overlay: {
+  cardRatingValue: {
+    color: "#fff",
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+  },
+
+  // IMPROVED CARD CONTENT
+  improvedCardContent: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.65)",
-    justifyContent: "flex-end",
+    padding: 14,
+    justifyContent: "space-between",
+    gap: 10,
   },
-  sheet: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 24,
-    paddingBottom: 40,
+  improvedCardTitle: {
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    lineHeight: 22,
   },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: 22,
-  },
-  sheetTitle: { fontSize: 22, fontFamily: "Inter_700Bold", marginBottom: 4 },
-  sheetSub: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    marginBottom: 20,
-  },
-  tripRow: {
+  cardMetaRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    gap: 12,
+    gap: 6,
   },
-  tripDot: { width: 10, height: 10, borderRadius: 5 },
-  tripName: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  tripDest: {
-    fontSize: 12,
+  improvedCardLocation: {
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
-    marginTop: 1,
   },
-  addCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  improvedCardDescription: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  cardFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  improvedCardPrice: {
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+  },
+  improvedCardBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  improvedCardBtnText: {
+    color: "#fff",
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+  },
+
+  // NO TRIPS STATE
+  noTrips: {
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: H_PAD,
+    paddingTop: 60,
+    paddingBottom: 60,
+    position: "relative",
+    marginVertical: 24,
   },
-  cancelBtn: {
-    marginTop: 16,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 14,
+  noTripsGradient: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 24,
+  },
+  noTripsIcon: {
+    width: 100,
+    height: 100,
+    borderRadius: 24,
+    backgroundColor: "rgba(255,255,255,0.05)",
     alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+    zIndex: 1,
   },
-  cancelText: { fontSize: 15, fontFamily: "Inter_500Medium" },
+  noTripsTitle: {
+    fontSize: 26,
+    fontFamily: "Inter_700Bold",
+    marginBottom: 10,
+    textAlign: "center",
+    zIndex: 1,
+  },
+  noTripsSubtitle: {
+    fontSize: 15,
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
+    marginBottom: 28,
+    lineHeight: 24,
+    zIndex: 1,
+  },
+  ctaBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 16,
+    zIndex: 1,
+  },
+  ctaBtnText: {
+    color: "#fff",
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+  },
 });

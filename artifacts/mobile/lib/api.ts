@@ -2,11 +2,24 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 
 const getBaseUrl = () => {
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (apiUrl) return apiUrl;
+
   const domain = process.env.EXPO_PUBLIC_DOMAIN;
   if (domain) return `https://${domain}/api`;
-  if (Platform.OS === "web" && typeof window !== "undefined") {
-    return `${window.location.origin}/api`;
+
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
   }
+
+  if (Platform.OS === "web") {
+    return "http://localhost:8080/api";
+  }
+
+  if (Platform.OS === "android") {
+    return "http://10.0.2.2:8080/api";
+  }
+
   return "http://localhost:8080/api";
 };
 
@@ -36,14 +49,19 @@ async function request<T>(
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
 
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ error: "Request failed" }));
-    throw new ApiError(res.status, body.error ?? "Request failed");
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: "Request failed" }));
+      throw new ApiError(res.status, body.error ?? "Request failed");
+    }
+
+    return res.json() as Promise<T>;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Network request failed";
+    throw new ApiError(0, message);
   }
-
-  return res.json() as Promise<T>;
 }
 
 export class ApiError extends Error {
@@ -100,6 +118,41 @@ export const api = {
       }),
     delete: (id: string) =>
       request<{ success: boolean }>(`/trips/${id}`, { method: "DELETE" }),
+  },
+
+  posts: {
+    list: (params?: { limit?: number; offset?: number }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.limit) searchParams.set("limit", params.limit.toString());
+      if (params?.offset) searchParams.set("offset", params.offset.toString());
+      return request<{ posts: PostWithCounts[] }>(`/posts?${searchParams.toString()}`);
+    },
+    get: (id: string) => request<{ post: PostWithDetails }>(`/posts/${id}`),
+    create: (data: CreatePostInput) =>
+      request<{ post: Post }>(`/posts`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    like: (id: string) =>
+      request<{ liked: boolean }>(`/posts/${id}/like`, { method: "POST" }),
+    addComment: (id: string, text: string) =>
+      request<{ comment: PostCommentWithAuthor }>(`/posts/${id}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ text }),
+      }),
+    getUserPosts: (userId: string, params?: { limit?: number; offset?: number }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.limit) searchParams.set("limit", params.limit.toString());
+      if (params?.offset) searchParams.set("offset", params.offset.toString());
+      return request<{ posts: PostWithCounts[] }>(`/posts/user/${userId}?${searchParams.toString()}`);
+    },
+  },
+
+  social: {
+    follow: (userId: string) =>
+      request<{ following: boolean }>(`/users/${userId}/follow`, { method: "POST" }),
+    getUserStats: (userId: string) =>
+      request<{ followers: number; following: number; posts: number; isFollowing: boolean }>(`/users/${userId}/stats`),
   },
 };
 
@@ -158,4 +211,71 @@ export type CreateTripInput = {
   accentColor?: string;
   notes?: string;
   status?: string;
+  coverImageUrl?: string;
+};
+
+export type Post = {
+  id: string;
+  authorId: string;
+  title: string;
+  location: string;
+  description: string;
+  imageUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PostComment = {
+  id: string;
+  postId: string;
+  authorId: string;
+  text: string;
+  createdAt: string;
+};
+
+export type PostLike = {
+  id: string;
+  postId: string;
+  userId: string;
+  createdAt: string;
+};
+
+export type UserFollow = {
+  id: string;
+  followerId: string;
+  followingId: string;
+  createdAt: string;
+};
+
+export type PostAuthor = {
+  id: string;
+  name: string;
+  username: string;
+  avatarUrl: string | null;
+};
+
+export type PostWithCounts = Post & {
+  author: PostAuthor;
+  commentCount: number;
+  likeCount: number;
+  userLiked: boolean;
+};
+
+export type PostCommentWithAuthor = PostComment & {
+  author: PostAuthor;
+};
+
+export type PostWithDetails = Post & {
+  author: PostAuthor;
+  commentCount: number;
+  likeCount: number;
+  userLiked: boolean;
+  comments: PostCommentWithAuthor[];
+};
+
+export type CreatePostInput = {
+  title: string;
+  location: string;
+  description: string;
+  imageUrl?: string;
 };

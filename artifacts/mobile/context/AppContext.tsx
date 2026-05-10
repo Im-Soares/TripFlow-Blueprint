@@ -7,7 +7,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { api, type TripWithMembers, type TripMemberRow } from "@/lib/api";
+import { api, ApiError, type TripWithMembers, type TripMemberRow } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
 /* ─── Local types ─── */
@@ -26,6 +26,7 @@ export interface Trip {
   destination: string;
   country: string;
   localCover?: string;
+  coverImageUrl?: string | null;
   startDate: string;
   endDate: string;
   status: "planning" | "upcoming" | "ongoing" | "completed";
@@ -140,6 +141,8 @@ function toLocalTrip(t: TripWithMembers): Trip {
     title: t.title,
     destination: t.destination,
     country: t.country ?? "",
+    localCover: undefined,
+    coverImageUrl: t.coverImageUrl ?? null,
     startDate: t.startDate,
     endDate: t.endDate,
     status: (t.status ?? "planning") as Trip["status"],
@@ -156,16 +159,17 @@ function toLocalTrip(t: TripWithMembers): Trip {
 /* ─── Seed data for local-only features ─── */
 
 const genId = () => Date.now().toString() + Math.random().toString(36).substr(2, 9);
+const TRIPS_KEY = "tf_trips";
 
 const SEED_ACHIEVEMENTS: Achievement[] = [
   { id: "ach_1", title: "First Trip", description: "Created your first trip", icon: "map", unlocked: false, progress: 0, maxProgress: 1, category: "trips" },
   { id: "ach_2", title: "World Explorer", description: "Visit 5 different countries", icon: "globe", unlocked: false, progress: 0, maxProgress: 5, category: "countries" },
   { id: "ach_3", title: "Master Planner", description: "Add 10 itinerary items", icon: "calendar", unlocked: false, progress: 0, maxProgress: 10, category: "planning" },
   { id: "ach_4", title: "Budget Pro", description: "Track budget on 3 trips", icon: "dollar-sign", unlocked: false, progress: 0, maxProgress: 3, category: "planning" },
-  { id: "ach_5", title: "Social Traveler", description: "Invite 3 friends to a trip", icon: "users", unlocked: false, progress: 0, maxProgress: 3, category: "social" },
+  { id: "ach_5", title: "Itinerary Expert", description: "Plan 5 detailed itineraries", icon: "list", unlocked: false, progress: 0, maxProgress: 5, category: "planning" },
   { id: "ach_6", title: "Globetrotter", description: "Complete 3 trips", icon: "award", unlocked: false, progress: 0, maxProgress: 3, category: "trips" },
-  { id: "ach_7", title: "Checklist Champion", description: "Pack everything for a trip", icon: "check-circle", unlocked: false, progress: 0, maxProgress: 1, category: "planning" },
-  { id: "ach_8", title: "Bookings Master", description: "Add 5 confirmed bookings", icon: "bookmark", unlocked: false, progress: 0, maxProgress: 5, category: "planning" },
+  { id: "ach_7", title: "Booking Master", description: "Add 5 confirmed bookings", icon: "bookmark", unlocked: false, progress: 0, maxProgress: 5, category: "planning" },
+  { id: "ach_8", title: "Destination Specialist", description: "Visit the same country 3 times", icon: "star", unlocked: false, progress: 0, maxProgress: 3, category: "countries" },
 ];
 
 /* ─── Context interface ─── */
@@ -224,18 +228,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [tripsLoading, setTripsLoading] = useState(false);
 
+  const saveTrips = useCallback(async (value: Trip[]) => {
+    await AsyncStorage.setItem(TRIPS_KEY, JSON.stringify(value));
+  }, []);
+
+  const loadLocalTrips = useCallback(async () => {
+    const raw = await AsyncStorage.getItem(TRIPS_KEY);
+    const localTrips = raw ? (JSON.parse(raw) as Trip[]) : [];
+    setTrips(localTrips);
+    return localTrips;
+  }, []);
+
   const refreshTrips = useCallback(async () => {
     if (authState.status !== "authenticated") return;
     setTripsLoading(true);
     try {
       const { trips: apiTrips } = await api.trips.list();
-      setTrips(apiTrips.map(toLocalTrip));
+      const localTrips = apiTrips.map(toLocalTrip);
+      setTrips(localTrips);
+      await saveTrips(localTrips);
     } catch {
+      await loadLocalTrips();
       // silently fail — trips stays as previous state
     } finally {
       setTripsLoading(false);
     }
-  }, [authState.status]);
+  }, [authState.status, loadLocalTrips, saveTrips]);
 
   useEffect(() => {
     if (authState.status === "authenticated") {
@@ -243,27 +261,61 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } else if (authState.status === "unauthenticated") {
       setTrips([]);
     }
-  }, [authState.status]);
+  }, [authState.status, refreshTrips]);
 
   const createTrip = useCallback(
     async (data: Omit<Trip, "id" | "createdAt" | "members" | "shareToken">): Promise<Trip> => {
-      const { trip: apiTrip } = await api.trips.create({
-        title: data.title,
-        destination: data.destination,
-        country: data.country,
-        startDate: data.startDate,
-        endDate: data.endDate,
-        currency: data.currency,
-        estimatedBudget: data.totalBudget,
-        accentColor: data.accentColor,
-        notes: data.notes,
-        status: data.status,
-      });
-      const local = toLocalTrip(apiTrip);
-      setTrips((prev) => [local, ...prev]);
-      return local;
+      try {
+        const { trip: apiTrip } = await api.trips.create({
+          title: data.title,
+          destination: data.destination,
+          country: data.country,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          currency: data.currency,
+          estimatedBudget: data.totalBudget,
+          accentColor: data.accentColor,
+          notes: data.notes,
+          status: data.status,
+          coverImageUrl: data.coverImageUrl ?? undefined,
+        });
+        const local = toLocalTrip(apiTrip);
+        setTrips((prev) => {
+          const next = [local, ...prev];
+          void saveTrips(next);
+          return next;
+        });
+        return local;
+      } catch (err) {
+        if (err instanceof ApiError && err.status !== 0) {
+          throw err;
+        }
+
+        const local: Trip = {
+          ...data,
+          coverImageUrl: data.coverImageUrl ?? null,
+          id: genId(),
+          createdAt: new Date().toISOString(),
+          members: [
+            {
+              id: currentUser.id || "local-user",
+              name: currentUser.name || "You",
+              initials: currentUser.initials || "YO",
+              color: currentUser.avatarColor || "#7C6FF7",
+              role: "owner",
+            },
+          ],
+          shareToken: Math.random().toString(36).slice(2, 10).toUpperCase(),
+        };
+        setTrips((prev) => {
+          const next = [local, ...prev];
+          void saveTrips(next);
+          return next;
+        });
+        return local;
+      }
     },
-    []
+    [currentUser, saveTrips]
   );
 
   const updateTrip = useCallback(async (id: string, data: Partial<Trip>) => {
@@ -279,15 +331,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (data.notes !== undefined) apiData.notes = data.notes;
     if (data.status !== undefined) apiData.status = data.status;
 
-    const { trip: apiTrip } = await api.trips.update(id, apiData as any);
-    const local = toLocalTrip(apiTrip as TripWithMembers);
-    setTrips((prev) => prev.map((t) => (t.id === id ? { ...local, members: t.members } : t)));
-  }, []);
+    try {
+      const { trip: apiTrip } = await api.trips.update(id, apiData as any);
+      const local = toLocalTrip(apiTrip as TripWithMembers);
+      setTrips((prev) => {
+        const next = prev.map((t) => (t.id === id ? { ...local, members: t.members } : t));
+        void saveTrips(next);
+        return next;
+      });
+    } catch {
+      setTrips((prev) => {
+        const next = prev.map((t) => (t.id === id ? { ...t, ...data } : t));
+        void saveTrips(next);
+        return next;
+      });
+    }
+  }, [saveTrips]);
 
   const deleteTrip = useCallback(async (id: string) => {
-    await api.trips.delete(id);
-    setTrips((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+    try {
+      await api.trips.delete(id);
+    } catch {}
+    setTrips((prev) => {
+      const next = prev.filter((t) => t.id !== id);
+      void saveTrips(next);
+      return next;
+    });
+  }, [saveTrips]);
 
   /* ─── Local-only data — AsyncStorage ─── */
 

@@ -58,7 +58,7 @@ export function TripCard({ trip, variant = "large" }: TripCardProps) {
   const colors = useColors();
   const router = useRouter();
 
-  const cover = trip.localCover ? COVER_IMAGES[trip.localCover] : null;
+  const cover = trip.coverImageUrl ? { uri: trip.coverImageUrl } : trip.localCover ? COVER_IMAGES[trip.localCover] : null;
   const days = daysUntil(trip.startDate);
   const duration = getTripDuration(trip.startDate, trip.endDate);
   const statusColor = STATUS_COLORS[trip.status] ?? colors.primary;
