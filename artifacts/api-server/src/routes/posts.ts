@@ -9,7 +9,7 @@ const router = Router();
 router.get("/posts", requireAuth, async (req, res) => {
   try {
     const userId = req.user!.userId;
-    const { limit = "20", offset = "0" } = req.query;
+    const { limit = "20", offset = "0" } = req.query as { limit?: string; offset?: string };
 
     // Get posts from users that the current user follows, plus their own posts
     const following = await db
@@ -85,9 +85,9 @@ router.get("/posts", requireAuth, async (req, res) => {
 /* ─── Get user's posts ─── */
 router.get("/posts/user/:userId", requireAuth, async (req, res) => {
   try {
-    const { userId: targetUserId } = req.params;
+    const { userId: targetUserId } = req.params as { userId: string };
     const currentUserId = req.user!.userId;
-    const { limit = "20", offset = "0" } = req.query;
+    const { limit = "20", offset = "0" } = req.query as { limit?: string; offset?: string };
 
     const posts = await db
       .select({
@@ -149,13 +149,14 @@ router.get("/posts/user/:userId", requireAuth, async (req, res) => {
 });
 
 /* ─── Create post ─── */
-router.post("/posts", requireAuth, async (req, res) => {
+router.post("/posts", requireAuth, async (req, res): Promise<void> => {
   try {
     const userId = req.user!.userId;
-    const { title, location, description, imageUrl } = req.body;
+    const { title, location, description, imageUrl } = req.body as { title: string; location: string; description: string; imageUrl?: string };
 
     if (!title || !location || !description) {
-      return res.status(400).json({ error: "title, location, and description are required" });
+      res.status(400).json({ error: "title, location, and description are required" });
+      return undefined;
     }
 
     const [post] = await db
@@ -171,16 +172,18 @@ router.post("/posts", requireAuth, async (req, res) => {
 
     req.log.info({ postId: post.id, userId }, "Post created");
     res.json({ post });
+    return undefined;
   } catch (error) {
     console.error("Error creating post:", error);
     res.status(500).json({ error: "Failed to create post" });
+    return undefined;
   }
 });
 
 /* ─── Get single post ─── */
 router.get("/posts/:id", requireAuth, async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const userId = req.user!.userId;
 
     const [post] = await db
@@ -250,13 +253,14 @@ router.get("/posts/:id", requireAuth, async (req, res) => {
   } catch (error) {
     console.error("Error fetching post:", error);
     res.status(500).json({ error: "Failed to fetch post" });
+    return;
   }
 });
 
 /* ─── Like/Unlike post ─── */
-router.post("/posts/:id/like", requireAuth, async (req, res) => {
+router.post("/posts/:id/like", requireAuth, async (req, res): Promise<void> => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const userId = req.user!.userId;
 
     const existingLike = await db
@@ -276,6 +280,7 @@ router.post("/posts/:id/like", requireAuth, async (req, res) => {
           eq(postLikesTable.userId, userId)
         ));
       res.json({ liked: false });
+      return undefined;
     } else {
       // Like
       await db.insert(postLikesTable).values({
@@ -283,22 +288,25 @@ router.post("/posts/:id/like", requireAuth, async (req, res) => {
         userId,
       });
       res.json({ liked: true });
+      return undefined;
     }
   } catch (error) {
     console.error("Error toggling like:", error);
     res.status(500).json({ error: "Failed to toggle like" });
+    return undefined;
   }
 });
 
 /* ─── Add comment ─── */
-router.post("/posts/:id/comments", requireAuth, async (req, res) => {
+router.post("/posts/:id/comments", requireAuth, async (req, res): Promise<void> => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const userId = req.user!.userId;
-    const { text } = req.body;
+    const { text } = req.body as { text: string };
 
     if (!text) {
-      return res.status(400).json({ error: "Comment text is required" });
+      res.status(400).json({ error: "Comment text is required" });
+      return undefined;
     }
 
     const [comment] = await db
@@ -328,16 +336,18 @@ router.post("/posts/:id/comments", requireAuth, async (req, res) => {
       .limit(1);
 
     res.json({ comment: commentWithAuthor[0] });
+    return undefined;
   } catch (error) {
     console.error("Error adding comment:", error);
     res.status(500).json({ error: "Failed to add comment" });
+    return undefined;
   }
 });
 
 /* ─── Follow/Unfollow user ─── */
 router.post("/users/:id/follow", requireAuth, async (req, res) => {
   try {
-    const { id: targetUserId } = req.params;
+    const { id: targetUserId } = req.params as { id: string };
     const followerId = req.user!.userId;
 
     if (targetUserId === followerId) {
@@ -372,13 +382,14 @@ router.post("/users/:id/follow", requireAuth, async (req, res) => {
   } catch (error) {
     console.error("Error toggling follow:", error);
     res.status(500).json({ error: "Failed to toggle follow" });
+    return;
   }
 });
 
 /* ─── Get user stats ─── */
 router.get("/users/:id/stats", requireAuth, async (req, res) => {
   try {
-    const { id: targetUserId } = req.params;
+    const { id: targetUserId } = req.params as { id: string };
     const currentUserId = req.user!.userId;
 
     // Get follower count
@@ -417,6 +428,7 @@ router.get("/users/:id/stats", requireAuth, async (req, res) => {
   } catch (error) {
     console.error("Error fetching user stats:", error);
     res.status(500).json({ error: "Failed to fetch user stats" });
+    return;
   }
 });
 

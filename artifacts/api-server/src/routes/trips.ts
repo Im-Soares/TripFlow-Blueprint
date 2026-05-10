@@ -75,7 +75,7 @@ router.get("/trips", requireAuth, async (req, res) => {
 router.get("/trips/:id", requireAuth, async (req, res) => {
   try {
     const userId = req.user!.userId;
-    const tripId = req.params.id;
+    const tripId = req.params.id as string;
 
     const [trip] = await db
       .select()
@@ -125,6 +125,7 @@ router.get("/trips/:id", requireAuth, async (req, res) => {
   } catch (err) {
     req.log.error(err, "Get trip failed");
     res.status(500).json({ error: "Failed to fetch trip" });
+    return;
   }
 });
 
@@ -190,7 +191,7 @@ router.post("/trips", requireAuth, async (req, res) => {
 /* ─── Update trip ─── */
 router.patch("/trips/:id", requireAuth, async (req, res) => {
   const userId = req.user!.userId;
-  const tripId = req.params.id;
+  const tripId = req.params.id as string;
 
   try {
     const [trip] = await db
@@ -248,7 +249,7 @@ router.patch("/trips/:id", requireAuth, async (req, res) => {
 /* ─── Delete trip ─── */
 router.delete("/trips/:id", requireAuth, async (req, res) => {
   const userId = req.user!.userId;
-  const tripId = req.params.id;
+  const tripId = req.params.id as string;
 
   try {
     const [trip] = await db
